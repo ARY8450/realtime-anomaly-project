@@ -35,13 +35,7 @@ def main():
 
     print("Starting classifier training (this may take a while)...")
     try:
-        # disable LightGBM here to avoid runtime hangs on some datasets/environments
-        try:
-            recommender.LGBM_AVAILABLE = False
-        except Exception:
-            pass
-        # use a small search budget and single-job to keep runtime reasonable
-        model, report, acc = recommender.train_model(ticker_map, n_iter=8, n_jobs=1)
+        model, report, acc = recommender.train_model(ticker_map)
         print("Classifier trained. Accuracy on holdout:", acc)
         print("Classification report summary (per-class precision/recall/f1):")
         if isinstance(report, dict):
