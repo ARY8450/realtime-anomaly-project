@@ -1,0 +1,4 @@
+curl --request GET \
+	--url https://seeking-alpha.p.rapidapi.com/accounts/logout \
+	--header 'x-rapidapi-host: seeking-alpha.p.rapidapi.com' \
+	--header 'x-rapidapi-key: ffd3196545msh999edca18e3a07ap18eb0ejsn5d11da852fcc'
