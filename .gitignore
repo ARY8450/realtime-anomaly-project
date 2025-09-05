@@ -24,3 +24,6 @@ __pycache__/
 .env
 .vscode/
 .streamlit/secrets.toml
+/data
+*.db
+Rapid API.txt
