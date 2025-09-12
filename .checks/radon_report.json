@@ -1,0 +1,954 @@
+{
+  "realtime_anomaly_project\\main.py": [
+    {
+      "name": "run_pipeline",
+      "complexity": 3,
+      "lineno": 7
+    }
+  ],
+  "realtime_anomaly_project\\run_all.py": [
+    {
+      "name": "init_database",
+      "complexity": 1,
+      "lineno": 20
+    },
+    {
+      "name": "run_once_fetch_and_compute",
+      "complexity": 4,
+      "lineno": 27
+    },
+    {
+      "name": "start_scheduler",
+      "complexity": 2,
+      "lineno": 51
+    },
+    {
+      "name": "create_streamlit_secrets",
+      "complexity": 6,
+      "lineno": 62
+    },
+    {
+      "name": "start_dashboard_subprocess",
+      "complexity": 5,
+      "lineno": 84
+    },
+    {
+      "name": "parse_args",
+      "complexity": 1,
+      "lineno": 108
+    },
+    {
+      "name": "main",
+      "complexity": 25,
+      "lineno": 120
+    }
+  ],
+  "realtime_anomaly_project\\app\\dashboard.py": [
+    {
+      "name": "cached_fetch_live",
+      "complexity": 2,
+      "lineno": 134
+    },
+    {
+      "name": "render_header_and_sidebar",
+      "complexity": 7,
+      "lineno": 144
+    },
+    {
+      "name": "_load_fundamentals_cache",
+      "complexity": 3,
+      "lineno": 183
+    },
+    {
+      "name": "_save_fundamentals_cache",
+      "complexity": 2,
+      "lineno": 192
+    },
+    {
+      "name": "_get_latest_db_ohlcv",
+      "complexity": 10,
+      "lineno": 232
+    },
+    {
+      "name": "get_latest_db_ohlcv",
+      "complexity": 11,
+      "lineno": 254
+    },
+    {
+      "name": "safe_iloc_last",
+      "complexity": 7,
+      "lineno": 277
+    },
+    {
+      "name": "_fetch_and_persist_if_missing",
+      "complexity": 5,
+      "lineno": 291
+    },
+    {
+      "name": "_fetch_and_cache_fundamentals",
+      "complexity": 5,
+      "lineno": 302
+    },
+    {
+      "name": "_get_fundamentals",
+      "complexity": 5,
+      "lineno": 313
+    },
+    {
+      "name": "_safe_float",
+      "complexity": 7,
+      "lineno": 324
+    },
+    {
+      "name": "_format_mktcap",
+      "complexity": 5,
+      "lineno": 340
+    },
+    {
+      "name": "_fetch_realtime_via_rapidapi",
+      "complexity": 32,
+      "lineno": 352
+    },
+    {
+      "name": "_parse_news_item",
+      "complexity": 11,
+      "lineno": 400
+    },
+    {
+      "name": "_render_news",
+      "complexity": 14,
+      "lineno": 416
+    },
+    {
+      "name": "_get_news_for_ticker",
+      "complexity": 33,
+      "lineno": 456
+    },
+    {
+      "name": "render_sidebar_portfolio_controls",
+      "complexity": 57,
+      "lineno": 523
+    },
+    {
+      "name": "_load_all_background",
+      "complexity": 8,
+      "lineno": 750
+    },
+    {
+      "name": "predict_next",
+      "complexity": 2,
+      "lineno": 908
+    },
+    {
+      "name": "fmt_float",
+      "complexity": 7,
+      "lineno": 1121
+    },
+    {
+      "name": "fmt_int",
+      "complexity": 5,
+      "lineno": 1134
+    },
+    {
+      "name": "_fmt_f",
+      "complexity": 7,
+      "lineno": 1287
+    },
+    {
+      "name": "_fmt_i",
+      "complexity": 5,
+      "lineno": 1299
+    },
+    {
+      "name": "_fmtnum",
+      "complexity": 5,
+      "lineno": 1418
+    },
+    {
+      "name": "badge_for_row",
+      "complexity": 20,
+      "lineno": 1714
+    }
+  ],
+  "realtime_anomaly_project\\app\\helpers.py": [
+    {
+      "name": "_format_mktcap",
+      "complexity": 5,
+      "lineno": 4
+    },
+    {
+      "name": "safe_float",
+      "complexity": 9,
+      "lineno": 18
+    },
+    {
+      "name": "safe_optional_float",
+      "complexity": 9,
+      "lineno": 42
+    },
+    {
+      "name": "safe_iloc_last",
+      "complexity": 6,
+      "lineno": 65
+    },
+    {
+      "name": "parse_news_item",
+      "complexity": 12,
+      "lineno": 85
+    },
+    {
+      "name": "tradingview_symbol",
+      "complexity": 3,
+      "lineno": 106
+    },
+    {
+      "name": "tradingview_embed_html",
+      "complexity": 1,
+      "lineno": 117
+    }
+  ],
+  "realtime_anomaly_project\\app\\_dashboard_helpers.py": [
+    {
+      "name": "_load_fundamentals_cache",
+      "complexity": 3,
+      "lineno": 11
+    },
+    {
+      "name": "_save_fundamentals_cache",
+      "complexity": 2,
+      "lineno": 20
+    },
+    {
+      "name": "_get_latest_db_ohlcv",
+      "complexity": 20,
+      "lineno": 34
+    },
+    {
+      "name": "_fetch_and_cache_fundamentals",
+      "complexity": 58,
+      "lineno": 78
+    },
+    {
+      "name": "_get_fundamentals",
+      "complexity": 4,
+      "lineno": 192
+    },
+    {
+      "name": "get_latest_db_ohlcv",
+      "complexity": 22,
+      "lineno": 200
+    },
+    {
+      "name": "_fetch_and_persist_if_missing",
+      "complexity": 28,
+      "lineno": 248
+    },
+    {
+      "name": "fetch_live_features",
+      "complexity": 57,
+      "lineno": 323
+    }
+  ],
+  "realtime_anomaly_project\\config\\settings.py": [
+    {
+      "name": "load_weights",
+      "complexity": 4,
+      "lineno": 7
+    }
+  ],
+  "realtime_anomaly_project\\database\\db_setup.py": [
+    {
+      "name": "setup_database",
+      "complexity": 2,
+      "lineno": 24
+    },
+    {
+      "name": "get_engine",
+      "complexity": 1,
+      "lineno": 45
+    },
+    {
+      "name": "init_db",
+      "complexity": 1,
+      "lineno": 49
+    },
+    {
+      "name": "StockData",
+      "complexity": 1,
+      "lineno": 8
+    }
+  ],
+  "realtime_anomaly_project\\database\\io.py": [
+    {
+      "name": "_p",
+      "complexity": 1,
+      "lineno": 24
+    },
+    {
+      "name": "ensure_dir",
+      "complexity": 3,
+      "lineno": 28
+    },
+    {
+      "name": "_atomic_write_bytes",
+      "complexity": 1,
+      "lineno": 39
+    },
+    {
+      "name": "_atomic_write_text",
+      "complexity": 1,
+      "lineno": 53
+    },
+    {
+      "name": "save_json",
+      "complexity": 1,
+      "lineno": 57
+    },
+    {
+      "name": "load_json",
+      "complexity": 1,
+      "lineno": 67
+    },
+    {
+      "name": "save_csv",
+      "complexity": 5,
+      "lineno": 76
+    },
+    {
+      "name": "load_csv",
+      "complexity": 2,
+      "lineno": 111
+    },
+    {
+      "name": "save_parquet",
+      "complexity": 4,
+      "lineno": 122
+    },
+    {
+      "name": "load_parquet",
+      "complexity": 2,
+      "lineno": 149
+    },
+    {
+      "name": "save",
+      "complexity": 5,
+      "lineno": 162
+    },
+    {
+      "name": "load",
+      "complexity": 4,
+      "lineno": 178
+    }
+  ],
+  "realtime_anomaly_project\\database\\test_db.py": [],
+  "realtime_anomaly_project\\database\\verifying_db.py": [],
+  "realtime_anomaly_project\\database\\view_db.py": [
+    {
+      "name": "fetch_rows",
+      "complexity": 3,
+      "lineno": 13
+    },
+    {
+      "name": "rows_to_df",
+      "complexity": 3,
+      "lineno": 26
+    },
+    {
+      "name": "write_csv",
+      "complexity": 2,
+      "lineno": 43
+    },
+    {
+      "name": "open_in_vscode",
+      "complexity": 2,
+      "lineno": 52
+    },
+    {
+      "name": "main",
+      "complexity": 4,
+      "lineno": 60
+    }
+  ],
+  "realtime_anomaly_project\\data_ingestion\\news_ingest.py": [
+    {
+      "name": "_init_db",
+      "complexity": 6,
+      "lineno": 25
+    },
+    {
+      "name": "_save_rows_to_db",
+      "complexity": 20,
+      "lineno": 60
+    },
+    {
+      "name": "_load_all_from_db_into_storage",
+      "complexity": 11,
+      "lineno": 95
+    },
+    {
+      "name": "rss_urls_for",
+      "complexity": 1,
+      "lineno": 138
+    },
+    {
+      "name": "normalize_ts",
+      "complexity": 3,
+      "lineno": 156
+    },
+    {
+      "name": "fetch_news",
+      "complexity": 33,
+      "lineno": 162
+    },
+    {
+      "name": "run_once",
+      "complexity": 2,
+      "lineno": 271
+    },
+    {
+      "name": "fetch_news_background",
+      "complexity": 5,
+      "lineno": 276
+    },
+    {
+      "name": "start_background_fetch",
+      "complexity": 1,
+      "lineno": 299
+    }
+  ],
+  "realtime_anomaly_project\\data_ingestion\\scheduler.py": [
+    {
+      "name": "start",
+      "complexity": 1,
+      "lineno": 12
+    }
+  ],
+  "realtime_anomaly_project\\data_ingestion\\yahoo.py": [
+    {
+      "name": "persist_stock_data_upsert",
+      "complexity": 27,
+      "lineno": 25
+    },
+    {
+      "name": "_parse_lookback_days",
+      "complexity": 4,
+      "lineno": 118
+    },
+    {
+      "name": "_normalize_df_datetime_and_close",
+      "complexity": 38,
+      "lineno": 126
+    },
+    {
+      "name": "fetch_2m_for_range",
+      "complexity": 16,
+      "lineno": 247
+    },
+    {
+      "name": "persist_stock_data",
+      "complexity": 31,
+      "lineno": 308
+    },
+    {
+      "name": "_sanitize_ticker",
+      "complexity": 2,
+      "lineno": 397
+    },
+    {
+      "name": "_symbol_has_prices_quick",
+      "complexity": 9,
+      "lineno": 403
+    },
+    {
+      "name": "_try_symbol_variants",
+      "complexity": 10,
+      "lineno": 436
+    },
+    {
+      "name": "fetch_ohlcv_for_ts",
+      "complexity": 12,
+      "lineno": 476
+    },
+    {
+      "name": "_probe_alternate_fetch",
+      "complexity": 16,
+      "lineno": 516
+    },
+    {
+      "name": "fetch_intraday",
+      "complexity": 17,
+      "lineno": 569
+    },
+    {
+      "name": "run_once",
+      "complexity": 8,
+      "lineno": 641
+    },
+    {
+      "name": "fetch_daily_fallback",
+      "complexity": 16,
+      "lineno": 674
+    }
+  ],
+  "realtime_anomaly_project\\deep_anomaly\\evaluate.py": [
+    {
+      "name": "generate_sine_batch",
+      "complexity": 3,
+      "lineno": 11
+    },
+    {
+      "name": "inject_anomalies",
+      "complexity": 3,
+      "lineno": 25
+    },
+    {
+      "name": "compute_recon_scores",
+      "complexity": 1,
+      "lineno": 44
+    },
+    {
+      "name": "precision_at_k",
+      "complexity": 2,
+      "lineno": 55
+    },
+    {
+      "name": "plot_roc_pr",
+      "complexity": 1,
+      "lineno": 64
+    },
+    {
+      "name": "main",
+      "complexity": 17,
+      "lineno": 93
+    }
+  ],
+  "realtime_anomaly_project\\deep_anomaly\\transformer_ae.py": [
+    {
+      "name": "PositionalEncoding",
+      "complexity": 3,
+      "lineno": 8
+    },
+    {
+      "name": "__init__",
+      "complexity": 2,
+      "lineno": 9
+    },
+    {
+      "name": "forward",
+      "complexity": 1,
+      "lineno": 28
+    },
+    {
+      "name": "TransformerAutoencoder",
+      "complexity": 3,
+      "lineno": 35
+    },
+    {
+      "name": "__init__",
+      "complexity": 1,
+      "lineno": 42
+    },
+    {
+      "name": "_reset_parameters",
+      "complexity": 3,
+      "lineno": 86
+    },
+    {
+      "name": "encode",
+      "complexity": 1,
+      "lineno": 91
+    },
+    {
+      "name": "forward",
+      "complexity": 1,
+      "lineno": 102
+    },
+    {
+      "name": "latent_vector",
+      "complexity": 3,
+      "lineno": 119
+    },
+    {
+      "name": "Discriminator",
+      "complexity": 4,
+      "lineno": 132
+    },
+    {
+      "name": "__init__",
+      "complexity": 3,
+      "lineno": 139
+    },
+    {
+      "name": "_reset_parameters",
+      "complexity": 6,
+      "lineno": 160
+    },
+    {
+      "name": "forward",
+      "complexity": 1,
+      "lineno": 171
+    },
+    {
+      "name": "TAEGAN",
+      "complexity": 2,
+      "lineno": 185
+    },
+    {
+      "name": "__init__",
+      "complexity": 3,
+      "lineno": 191
+    },
+    {
+      "name": "reconstruct",
+      "complexity": 1,
+      "lineno": 211
+    },
+    {
+      "name": "forward",
+      "complexity": 1,
+      "lineno": 214
+    },
+    {
+      "name": "generator_loss",
+      "complexity": 1,
+      "lineno": 224
+    },
+    {
+      "name": "discriminator_loss",
+      "complexity": 1,
+      "lineno": 237
+    }
+  ],
+  "realtime_anomaly_project\\fusion\\recommender.py": [
+    {
+      "name": "_make_features",
+      "complexity": 6,
+      "lineno": 38
+    },
+    {
+      "name": "_make_target",
+      "complexity": 1,
+      "lineno": 121
+    },
+    {
+      "name": "prepare_dataset",
+      "complexity": 5,
+      "lineno": 137
+    },
+    {
+      "name": "train_model",
+      "complexity": 23,
+      "lineno": 176
+    },
+    {
+      "name": "train_model_single",
+      "complexity": 14,
+      "lineno": 302
+    },
+    {
+      "name": "train_regression_model",
+      "complexity": 6,
+      "lineno": 370
+    },
+    {
+      "name": "load_model",
+      "complexity": 2,
+      "lineno": 418
+    },
+    {
+      "name": "predict_from_df",
+      "complexity": 18,
+      "lineno": 425
+    }
+  ],
+  "realtime_anomaly_project\\sentiment_module\\finbert_sentiment.py": [
+    {
+      "name": "analyze_sentiment",
+      "complexity": 1,
+      "lineno": 18
+    }
+  ],
+  "realtime_anomaly_project\\sentiment_module\\wcn_classifier.py": [
+    {
+      "name": "classify_category",
+      "complexity": 4,
+      "lineno": 11
+    }
+  ],
+  "realtime_anomaly_project\\statistical_anomaly\\bulk_fetch_all.py": [
+    {
+      "name": "in_db",
+      "complexity": 1,
+      "lineno": 16
+    },
+    {
+      "name": "force_persist",
+      "complexity": 18,
+      "lineno": 20
+    },
+    {
+      "name": "try_fetch_and_persist",
+      "complexity": 19,
+      "lineno": 74
+    },
+    {
+      "name": "bulk_fetch_all",
+      "complexity": 6,
+      "lineno": 136
+    }
+  ],
+  "realtime_anomaly_project\\statistical_anomaly\\classical_methods.py": [
+    {
+      "name": "_rolling_z",
+      "complexity": 1,
+      "lineno": 17
+    },
+    {
+      "name": "_rsi",
+      "complexity": 1,
+      "lineno": 23
+    },
+    {
+      "name": "plot_anomalies",
+      "complexity": 1,
+      "lineno": 32
+    },
+    {
+      "name": "_load_ticker_df",
+      "complexity": 17,
+      "lineno": 59
+    },
+    {
+      "name": "compute_anomalies",
+      "complexity": 45,
+      "lineno": 129
+    }
+  ],
+  "realtime_anomaly_project\\statistical_anomaly\\data_storage.py": [
+    {
+      "name": "df_map_from_storage",
+      "complexity": 11,
+      "lineno": 10
+    },
+    {
+      "name": "df_map_from_db",
+      "complexity": 5,
+      "lineno": 35
+    },
+    {
+      "name": "inspect_fetch",
+      "complexity": 2,
+      "lineno": 63
+    }
+  ],
+  "realtime_anomaly_project\\statistical_anomaly\\debug_run.py": [
+    {
+      "name": "df_map_from_storage",
+      "complexity": 13,
+      "lineno": 12
+    },
+    {
+      "name": "df_map_from_db",
+      "complexity": 5,
+      "lineno": 43
+    }
+  ],
+  "realtime_anomaly_project\\statistical_anomaly\\fetch_missing.py": [
+    {
+      "name": "tickers_in_db",
+      "complexity": 2,
+      "lineno": 13
+    },
+    {
+      "name": "fetch_with_retries",
+      "complexity": 6,
+      "lineno": 18
+    },
+    {
+      "name": "fetch_missing_all",
+      "complexity": 6,
+      "lineno": 44
+    }
+  ],
+  "realtime_anomaly_project\\statistical_anomaly\\inspect_ticker.py": [
+    {
+      "name": "inspect",
+      "complexity": 4,
+      "lineno": 8
+    }
+  ],
+  "realtime_anomaly_project\\statistical_anomaly\\list_db_tickers.py": [
+    {
+      "name": "in_db",
+      "complexity": 1,
+      "lineno": 12
+    },
+    {
+      "name": "force_persist",
+      "complexity": 14,
+      "lineno": 16
+    },
+    {
+      "name": "try_fetch_and_persist",
+      "complexity": 15,
+      "lineno": 53
+    },
+    {
+      "name": "bulk_fetch_all",
+      "complexity": 6,
+      "lineno": 103
+    }
+  ],
+  "realtime_anomaly_project\\statistical_anomaly\\show_results.py": [
+    {
+      "name": "load_ticker_df",
+      "complexity": 23,
+      "lineno": 27
+    },
+    {
+      "name": "to_dataframe_full",
+      "complexity": 12,
+      "lineno": 118
+    },
+    {
+      "name": "write_csv",
+      "complexity": 2,
+      "lineno": 165
+    },
+    {
+      "name": "open_in_vscode",
+      "complexity": 2,
+      "lineno": 175
+    },
+    {
+      "name": "main",
+      "complexity": 18,
+      "lineno": 183
+    }
+  ],
+  "realtime_anomaly_project\\statistical_anomaly\\unsupervised.py": [
+    {
+      "name": "_features_from_df",
+      "complexity": 4,
+      "lineno": 14
+    },
+    {
+      "name": "_build_df_map_from_storage_or_db",
+      "complexity": 23,
+      "lineno": 25
+    },
+    {
+      "name": "compute_unsupervised_anomalies",
+      "complexity": 10,
+      "lineno": 109
+    }
+  ],
+  "realtime_anomaly_project\\statistical_anomaly\\yf_probe.py": [],
+  "realtime_anomaly_project\\stats\\simple.py": [
+    {
+      "name": "_rolling_z",
+      "complexity": 1,
+      "lineno": 16
+    },
+    {
+      "name": "_rsi",
+      "complexity": 1,
+      "lineno": 22
+    },
+    {
+      "name": "compute_anomalies",
+      "complexity": 29,
+      "lineno": 30
+    }
+  ],
+  "realtime_anomaly_project\\summarize\\timeseries_summary.py": [
+    {
+      "name": "detect_changepoints",
+      "complexity": 2,
+      "lineno": 13
+    },
+    {
+      "name": "_parse_lookback_days",
+      "complexity": 6,
+      "lineno": 22
+    },
+    {
+      "name": "_ensure_datetime_index",
+      "complexity": 5,
+      "lineno": 36
+    },
+    {
+      "name": "summarize_stock_data",
+      "complexity": 17,
+      "lineno": 57
+    },
+    {
+      "name": "summarize_all_tickers",
+      "complexity": 3,
+      "lineno": 162
+    },
+    {
+      "name": "print_summaries",
+      "complexity": 3,
+      "lineno": 172
+    }
+  ],
+  "realtime_anomaly_project\\tests\\test_helpers.py": [
+    {
+      "name": "test_format_mktcap",
+      "complexity": 5,
+      "lineno": 4
+    },
+    {
+      "name": "test_safe_float_and_optional",
+      "complexity": 6,
+      "lineno": 11
+    }
+  ],
+  "realtime_anomaly_project\\tests\\test_helpers_extra.py": [
+    {
+      "name": "test_safe_iloc_last_with_dataframe",
+      "complexity": 3,
+      "lineno": 5
+    },
+    {
+      "name": "test_safe_iloc_last_empty_or_none",
+      "complexity": 3,
+      "lineno": 12
+    },
+    {
+      "name": "test_parse_news_item_full",
+      "complexity": 6,
+      "lineno": 17
+    },
+    {
+      "name": "test_parse_news_item_short",
+      "complexity": 3,
+      "lineno": 27
+    }
+  ],
+  "realtime_anomaly_project\\tests\\test_tradingview_helpers.py": [
+    {
+      "name": "test_tradingview_symbol_ns",
+      "complexity": 3,
+      "lineno": 4
+    },
+    {
+      "name": "test_tradingview_symbol_plain",
+      "complexity": 2,
+      "lineno": 9
+    },
+    {
+      "name": "test_tradingview_embed_contains_symbol",
+      "complexity": 3,
+      "lineno": 13
+    }
+  ],
+  "realtime_anomaly_project\\utils\\logging.py": [
+    {
+      "name": "setup_logging",
+      "complexity": 1,
+      "lineno": 4
+    }
+  ]
+}
