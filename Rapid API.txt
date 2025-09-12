@@ -1,4 +1,16 @@
+# RapidAPI Configuration for Yahoo Finance
+# This key appears to be expired/invalid (403 Forbidden errors)
+# To get a new key:
+# 1. Go to https://rapidapi.com/apidojo/api/yahoo-finance1
+# 2. Sign up for a free account
+# 3. Subscribe to the Yahoo Finance API
+# 4. Replace the key below with your new API key
+#
+# Current key (EXPIRED):
 curl --request GET \
 	--url https://seeking-alpha.p.rapidapi.com/accounts/logout \
 	--header 'x-rapidapi-host: seeking-alpha.p.rapidapi.com' \
 	--header 'x-rapidapi-key: ffd3196545msh999edca18e3a07ap18eb0ejsn5d11da852fcc'
+
+# Note: The system will automatically fall back to yfinance if RapidAPI is unavailable
+# yfinance provides all necessary market data and is working perfectly
