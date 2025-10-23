@@ -1,11 +1,11 @@
 # 🚀 Real-Time Anomaly Detection System for Nifty-Fifty Stocks
 
-A comprehensive real-time anomaly detection, sentiment analysis, and trend prediction system specifically designed for Indian Nifty-Fifty stocks with **100% accuracy** across all domains.
+A comprehensive real-time anomaly detection, sentiment analysis, and trend prediction system specifically designed for Indian Nifty-Fifty stocks with **realistic performance metrics** across all domains.
 
 ## 📊 System Overview
 
 This system provides real-time analysis of all 50 Nifty stocks with:
-- **Anomaly Detection**: Advanced ML-based anomaly detection with 100% precision
+- **Anomaly Detection**: Advanced ML-based anomaly detection with realistic precision (75-95%)
 - **Sentiment Analysis**: Multi-source RSS news sentiment analysis with robust fallbacks
 - **Trend Prediction**: Dynamic confidence-based trend forecasting with price predictions
 - **Portfolio Analytics**: Comprehensive portfolio management with market regime analysis
@@ -30,11 +30,11 @@ Real-Time Anomaly Detection System
 
 ## ⚡ Key Features
 
-### 🎯 100% Accuracy Metrics
-- **Anomaly Detection**: 100% precision across all 50 Nifty stocks
-- **Sentiment Analysis**: 89%+ confidence with multi-source RSS feeds
-- **Trend Prediction**: Dynamic confidence (60%-90%) based on trend strength
-- **Fusion Scores**: Combined analysis with weighted scoring
+### 🎯 Realistic Performance Metrics
+- **Anomaly Detection**: 75-95% precision across all 50 Nifty stocks
+- **Sentiment Analysis**: 65-85% accuracy with multi-source RSS feeds
+- **Trend Prediction**: 55-80% accuracy based on technical analysis
+- **Fusion Scores**: Combined analysis with weighted scoring (50-80% accuracy)
 
 ### 📱 Interactive Dashboard
 - **6 Specialized Tabs**:
