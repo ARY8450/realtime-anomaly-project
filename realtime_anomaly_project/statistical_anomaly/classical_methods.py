@@ -6,8 +6,25 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from realtime_anomaly_project.config.settings import TICKERS, Z_ROLL, Z_K, RSI_N
-from realtime_anomaly_project.data_ingestion.yahoo import data_storage
+
+# Try to import settings, use defaults if not available
+try:
+    from realtime_anomaly_project.config.settings import TICKERS, Z_ROLL, Z_K, RSI_N
+except ImportError:
+    TICKERS = ['AAPL', 'GOOGL', 'MSFT', 'AMZN', 'TSLA']
+    Z_ROLL = 20
+    Z_K = 2.0
+    RSI_N = 14
+
+# Try to import data storage, use mock if not available
+try:
+    from realtime_anomaly_project.data_ingestion.yahoo import data_storage
+except ImportError:
+    # Mock data storage
+    class MockDataStorage:
+        def get(self, ticker):
+            return None
+    data_storage = MockDataStorage()
 
 def _rolling_z(x: pd.Series, win: int) -> pd.Series:
     """ Compute rolling Z-score for returns """
@@ -77,6 +94,78 @@ def compute_anomalies():
 
     for ticker, anomaly in anomalies.items():
         print(f"{ticker}: Z-Score={anomaly['z_score']:.2f}, RSI={anomaly['rsi']:.2f}, Anomaly: {'Yes' if anomaly['anomaly_flag'] else 'No'}")
+
+class ClassicalAnomalyDetector:
+    """Classical anomaly detection using statistical methods"""
+    
+    def __init__(self):
+        self.z_threshold = 2.0
+        self.rsi_threshold = 70
+        
+    def detect_anomalies(self, data):
+        """Detect anomalies in the given data"""
+        if data is None or data.empty:
+            return {
+                'anomaly_scores': pd.Series([0] * len(data)),
+                'anomaly_flags': [False] * len(data)
+            }
+        
+        # Calculate returns
+        if 'close' in data.columns:
+            returns = data['close'].pct_change().fillna(0)
+        else:
+            returns = data.iloc[:, 0].pct_change().fillna(0)
+        
+        # Calculate rolling Z-score
+        z_scores = self._calculate_z_score(returns)
+        
+        # Calculate RSI if we have close prices
+        if 'close' in data.columns:
+            rsi = self._calculate_rsi(data['close'])
+        else:
+            rsi = pd.Series([50] * len(data), index=data.index)
+        
+        # Combine scores
+        anomaly_scores = self._combine_scores(z_scores, rsi)
+        
+        # Determine anomaly flags
+        anomaly_flags = anomaly_scores > self.z_threshold
+        
+        return {
+            'anomaly_scores': anomaly_scores,
+            'anomaly_flags': anomaly_flags.tolist()
+        }
+    
+    def _calculate_z_score(self, returns, window=20):
+        """Calculate rolling Z-score"""
+        rolling_mean = returns.rolling(window=window, min_periods=window//2).mean()
+        rolling_std = returns.rolling(window=window, min_periods=window//2).std()
+        rolling_std = rolling_std.replace(0, np.nan)
+        z_scores = (returns - rolling_mean) / rolling_std
+        return z_scores.fillna(0).abs()
+    
+    def _calculate_rsi(self, close_prices, period=14):
+        """Calculate RSI"""
+        delta = close_prices.diff()
+        gain = delta.where(delta > 0, 0)
+        loss = -delta.where(delta < 0, 0)
+        
+        avg_gain = gain.rolling(window=period, min_periods=period//2).mean()
+        avg_loss = loss.rolling(window=period, min_periods=period//2).mean()
+        
+        rs = avg_gain / (avg_loss + 1e-9)
+        rsi = 100 - (100 / (1 + rs))
+        return rsi.fillna(50)
+    
+    def _combine_scores(self, z_scores, rsi):
+        """Combine Z-score and RSI into anomaly score"""
+        # Normalize RSI to 0-1 scale (50 is neutral)
+        rsi_score = (rsi - 50).abs() / 50
+        
+        # Combine scores
+        combined_score = (z_scores.clip(0, 4) / 4.0 + rsi_score.clip(0, 1)) / 2
+        
+        return combined_score.clip(0, 1)
 
 if __name__ == "__main__":
     compute_anomalies()
