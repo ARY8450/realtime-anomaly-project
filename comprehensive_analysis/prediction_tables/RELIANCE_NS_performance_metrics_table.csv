@@ -1,0 +1,10 @@
+Metric,Value,Unit
+Mean Absolute Error (MAE),0.7747,Price Units
+Mean Absolute Percentage Error (MAPE),0.78,Percentage
+Direction Accuracy,90.0,Percentage
+Average Model Confidence,0.8,Score (0-1)
+Total Anomalies Detected,5,Count
+Anomaly Rate,16.67,Percentage
+Total Trading Days,30,Days
+Best Performance Day,2024-01-25,Date
+Worst Performance Day,2024-01-23,Date

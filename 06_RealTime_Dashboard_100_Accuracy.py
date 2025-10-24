@@ -46,6 +46,406 @@ if 'last_update' not in st.session_state:
 if 'auto_refresh' not in st.session_state:
     st.session_state.auto_refresh = True
 
+# Analysis dashboard helper functions
+def load_analysis_data():
+    """Load analysis data from the comprehensive_analysis directory"""
+    try:
+        analysis_dir = "comprehensive_analysis"
+        
+        # Load backtesting data
+        backtesting_path = os.path.join(analysis_dir, "backtesting_results", "RELIANCE_NS_prediction_comparison_table.csv")
+        if os.path.exists(backtesting_path):
+            backtesting_df = pd.read_csv(backtesting_path)
+        else:
+            backtesting_df = None
+            
+        # Load summary data
+        summary_path = os.path.join(analysis_dir, "backtesting_results", "RELIANCE_NS_prediction_summary_stats.csv")
+        if os.path.exists(summary_path):
+            summary_df = pd.read_csv(summary_path)
+        else:
+            summary_df = None
+            
+        # Load metrics data
+        metrics_path = os.path.join(analysis_dir, "prediction_tables", "RELIANCE_NS_performance_metrics_table.csv")
+        if os.path.exists(metrics_path):
+            metrics_df = pd.read_csv(metrics_path)
+        else:
+            metrics_df = None
+            
+        return backtesting_df, summary_df, metrics_df
+        
+    except Exception as e:
+        st.error(f"Error loading analysis data: {str(e)}")
+        return None, None, None
+
+def create_metrics_overview(summary_df):
+    """Create key metrics overview"""
+    if summary_df is None or summary_df.empty:
+        st.warning("No summary data available")
+        return
+        
+    summary = summary_df.iloc[0]
+    
+    col1, col2, col3, col4, col5 = st.columns(5)
+    
+    with col1:
+        st.metric(
+            label="📅 Trading Days",
+            value=f"{summary.get('Total_Days', 'N/A')}",
+            delta=None
+        )
+    
+    with col2:
+        st.metric(
+            label="📊 Mean Error",
+            value=f"{summary.get('Mean_Absolute_Percentage_Error', 'N/A')}%",
+            delta=None
+        )
+    
+    with col3:
+        st.metric(
+            label="🎯 Direction Accuracy",
+            value=f"{summary.get('Direction_Accuracy', 'N/A')}%",
+            delta=None
+        )
+    
+    with col4:
+        st.metric(
+            label="🔮 Avg Confidence",
+            value=f"{summary.get('Average_Confidence', 'N/A')}",
+            delta=None
+        )
+    
+    with col5:
+        st.metric(
+            label="⚠️ Anomaly Rate",
+            value=f"{summary.get('Anomaly_Rate', 'N/A')}%",
+            delta=None
+        )
+
+def create_backtesting_chart(backtesting_df):
+    """Create backtesting results chart"""
+    if backtesting_df is None or backtesting_df.empty:
+        st.warning("No backtesting data available")
+        return
+        
+    fig = go.Figure()
+    
+    # Add actual prices
+    fig.add_trace(go.Scatter(
+        x=backtesting_df['Date'],
+        y=backtesting_df['Actual_Price'],
+        mode='lines+markers',
+        name='Actual Price',
+        line=dict(color='#2ecc71', width=3),
+        marker=dict(size=6)
+    ))
+    
+    # Add predicted prices
+    fig.add_trace(go.Scatter(
+        x=backtesting_df['Date'],
+        y=backtesting_df['Predicted_Price'],
+        mode='lines+markers',
+        name='Predicted Price',
+        line=dict(color='#3498db', width=3),
+        marker=dict(size=6)
+    ))
+    
+    fig.update_layout(
+        title='Actual vs Predicted Prices - 30 Day Backtesting',
+        xaxis_title='Date',
+        yaxis_title='Price',
+        hovermode='closest',
+        showlegend=True,
+        height=500
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
+
+def create_anomaly_detection_chart(backtesting_df):
+    """Create anomaly detection chart"""
+    if backtesting_df is None or backtesting_df.empty:
+        st.warning("No anomaly data available")
+        return
+        
+    fig = go.Figure()
+    
+    # Separate normal and anomaly points
+    normal_data = backtesting_df[~backtesting_df['Is_Anomaly']]
+    anomaly_data = backtesting_df[backtesting_df['Is_Anomaly']]
+    
+    # Add normal points
+    fig.add_trace(go.Scatter(
+        x=normal_data['Date'],
+        y=normal_data['Actual_Price'],
+        mode='lines+markers',
+        name='Normal',
+        line=dict(color='#95a5a6', width=2),
+        marker=dict(size=4)
+    ))
+    
+    # Add anomaly points
+    if not anomaly_data.empty:
+        fig.add_trace(go.Scatter(
+            x=anomaly_data['Date'],
+            y=anomaly_data['Actual_Price'],
+            mode='markers',
+            name='Anomaly',
+            marker=dict(
+                color='#e74c3c',
+                size=12,
+                symbol='x',
+                line=dict(width=2, color='#c0392b')
+            )
+        ))
+    
+    fig.update_layout(
+        title='Anomaly Detection Results',
+        xaxis_title='Date',
+        yaxis_title='Price',
+        hovermode='closest',
+        showlegend=True,
+        height=400
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
+
+def create_candlestick_chart(backtesting_df):
+    """Create candlestick chart with predictions"""
+    if backtesting_df is None or backtesting_df.empty:
+        st.warning("No candlestick data available")
+        return
+        
+    fig = make_subplots(
+        rows=2, cols=1,
+        shared_xaxes=True,
+        vertical_spacing=0.1,
+        subplot_titles=('RELIANCE.NS - Actual vs Predicted Prices', 'Volume'),
+        row_heights=[0.7, 0.3]
+    )
+    
+    # Candlestick chart
+    fig.add_trace(
+        go.Candlestick(
+            x=backtesting_df['Date'],
+            open=backtesting_df['Actual_Price'] * 0.99,  # Simulate open prices
+            high=backtesting_df['High'],
+            low=backtesting_df['Low'],
+            close=backtesting_df['Actual_Price'],
+            name='Actual Price',
+            increasing_line_color='green',
+            decreasing_line_color='red'
+        ),
+        row=1, col=1
+    )
+    
+    # Predicted prices line
+    fig.add_trace(
+        go.Scatter(
+            x=backtesting_df['Date'],
+            y=backtesting_df['Predicted_Price'],
+            mode='lines+markers',
+            name='Predicted Price',
+            line=dict(color='blue', width=2),
+            marker=dict(size=4)
+        ),
+        row=1, col=1
+    )
+    
+    # Volume chart
+    fig.add_trace(
+        go.Bar(
+            x=backtesting_df['Date'],
+            y=backtesting_df['Volume'],
+            name='Volume',
+            marker_color='lightblue'
+        ),
+        row=2, col=1
+    )
+    
+    fig.update_layout(
+        title='RELIANCE.NS Backtesting Results - 30 Days',
+        xaxis_title='Date',
+        yaxis_title='Price',
+        height=600,
+        showlegend=True
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
+
+def create_performance_chart(backtesting_df):
+    """Create performance metrics chart"""
+    if backtesting_df is None or backtesting_df.empty:
+        st.warning("No performance data available")
+        return
+        
+    fig = make_subplots(
+        rows=2, cols=1,
+        subplot_titles=('Prediction Error Over Time', 'Model Confidence Over Time'),
+        vertical_spacing=0.1
+    )
+    
+    # Error percentage chart
+    fig.add_trace(
+        go.Scatter(
+            x=backtesting_df['Date'],
+            y=backtesting_df['Percentage_Error'],
+            mode='lines+markers',
+            name='Prediction Error %',
+            line=dict(color='#e74c3c', width=2),
+            marker=dict(size=6)
+        ),
+        row=1, col=1
+    )
+    
+    # Confidence chart
+    fig.add_trace(
+        go.Scatter(
+            x=backtesting_df['Date'],
+            y=backtesting_df['Model_Confidence'],
+            mode='lines+markers',
+            name='Model Confidence',
+            line=dict(color='#3498db', width=2),
+            marker=dict(size=6)
+        ),
+        row=2, col=1
+    )
+    
+    fig.update_layout(
+        title='Performance Metrics Over Time',
+        height=600,
+        showlegend=True
+    )
+    
+    fig.update_xaxes(title_text="Date", row=2, col=1)
+    fig.update_yaxes(title_text="Error %", row=1, col=1)
+    fig.update_yaxes(title_text="Confidence Score", row=2, col=1)
+    
+    st.plotly_chart(fig, use_container_width=True)
+
+def create_architecture_diagram():
+    """Create system architecture diagram"""
+    # Create the new architecture diagram based on the provided image
+    fig = go.Figure()
+    
+    # Define nodes with their positions and colors based on the new architecture
+    nodes = [
+        # Top level - Data Sources
+        {'x': 4, 'y': 10, 'text': 'Data Sources', 'color': '#e1f5fe', 'size': 60},
+        
+        # Data Pipeline
+        {'x': 4, 'y': 8.5, 'text': 'Data Ingestion', 'color': '#f3e5f5', 'size': 60},
+        {'x': 4, 'y': 7, 'text': 'Data Processing', 'color': '#e8f5e8', 'size': 60},
+        {'x': 4, 'y': 5.5, 'text': 'ML Models', 'color': '#fff3e0', 'size': 60},
+        
+        # Parallel Analysis Components
+        {'x': 1.5, 'y': 4, 'text': 'Anomaly Detection', 'color': '#ffebee', 'size': 50},
+        {'x': 2.5, 'y': 4, 'text': 'Sentiment Analysis', 'color': '#f1f8e9', 'size': 50},
+        {'x': 5.5, 'y': 4, 'text': 'Trend Prediction', 'color': '#e3f2fd', 'size': 50},
+        {'x': 6.5, 'y': 4, 'text': 'Portfolio Analysis', 'color': '#fce4ec', 'size': 50},
+        
+        # Fusion Engine
+        {'x': 4, 'y': 2.5, 'text': 'Fusion Engine', 'color': '#f9fbe7', 'size': 60},
+        
+        # Decision Engine
+        {'x': 4, 'y': 1, 'text': 'Decision Engine', 'color': '#e0f2f1', 'size': 60},
+        
+        # Output Components
+        {'x': 1.5, 'y': -0.5, 'text': 'Real-time Dashboard', 'color': '#e8eaf6', 'size': 50},
+        {'x': 2.5, 'y': -0.5, 'text': 'Alerts System', 'color': '#fff8e1', 'size': 50},
+        {'x': 5.5, 'y': -0.5, 'text': 'API Endpoints', 'color': '#f3e5f5', 'size': 50},
+        {'x': 6.5, 'y': -0.5, 'text': 'Database', 'color': '#e0f7fa', 'size': 50}
+    ]
+    
+    # Add nodes
+    fig.add_trace(go.Scatter(
+        x=[node['x'] for node in nodes],
+        y=[node['y'] for node in nodes],
+        mode='markers+text',
+        text=[node['text'] for node in nodes],
+        textposition='middle center',
+        marker=dict(
+            size=[node['size'] for node in nodes],
+            color=[node['color'] for node in nodes],
+            line=dict(width=2, color='#2c3e50')
+        ),
+        hovertemplate='<b>%{text}</b><extra></extra>',
+        name='Components'
+    ))
+    
+    # Add arrows to show flow
+    arrows = [
+        # Main flow
+        {'x': [4, 4], 'y': [10, 8.5], 'color': '#2c3e50'},
+        {'x': [4, 4], 'y': [8.5, 7], 'color': '#2c3e50'},
+        {'x': [4, 4], 'y': [7, 5.5], 'color': '#2c3e50'},
+        
+        # Branching to analysis components
+        {'x': [4, 1.5], 'y': [5.5, 4], 'color': '#2c3e50'},
+        {'x': [4, 2.5], 'y': [5.5, 4], 'color': '#2c3e50'},
+        {'x': [4, 5.5], 'y': [5.5, 4], 'color': '#2c3e50'},
+        {'x': [4, 6.5], 'y': [5.5, 4], 'color': '#2c3e50'},
+        
+        # Converging to Fusion Engine
+        {'x': [1.5, 4], 'y': [4, 2.5], 'color': '#2c3e50'},
+        {'x': [2.5, 4], 'y': [4, 2.5], 'color': '#2c3e50'},
+        {'x': [5.5, 4], 'y': [4, 2.5], 'color': '#2c3e50'},
+        {'x': [6.5, 4], 'y': [4, 2.5], 'color': '#2c3e50'},
+        
+        # Decision Engine
+        {'x': [4, 4], 'y': [2.5, 1], 'color': '#2c3e50'},
+        
+        # Output branches
+        {'x': [4, 1.5], 'y': [1, -0.5], 'color': '#2c3e50'},
+        {'x': [4, 2.5], 'y': [1, -0.5], 'color': '#2c3e50'},
+        {'x': [4, 5.5], 'y': [1, -0.5], 'color': '#2c3e50'},
+        {'x': [4, 6.5], 'y': [1, -0.5], 'color': '#2c3e50'}
+    ]
+    
+    # Add arrows
+    for arrow in arrows:
+        fig.add_trace(go.Scatter(
+            x=arrow['x'],
+            y=arrow['y'],
+            mode='lines',
+            line=dict(color=arrow['color'], width=3),
+            showlegend=False,
+            hoverinfo='skip'
+        ))
+    
+    fig.update_layout(
+        title='Real-Time Anomaly Detection System Architecture',
+        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False, range=[0, 8]),
+        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False, range=[-1, 11]),
+        hovermode='closest',
+        showlegend=False,
+        height=600,
+        width=800
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
+
+def create_data_tables(backtesting_df, metrics_df):
+    """Create data tables"""
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader("📊 Backtesting Results Table")
+        if backtesting_df is not None and not backtesting_df.empty:
+            # Show only first 10 rows for performance
+            display_df = backtesting_df[['Date', 'Actual_Price', 'Predicted_Price', 'Difference', 'Percentage_Error', 'Performance_Grade', 'Is_Anomaly']].head(10)
+            st.dataframe(display_df, use_container_width=True)
+        else:
+            st.warning("No backtesting data available")
+    
+    with col2:
+        st.subheader("📈 Performance Metrics")
+        if metrics_df is not None and not metrics_df.empty:
+            st.dataframe(metrics_df, use_container_width=True)
+        else:
+            st.warning("No metrics data available")
+
 # Import real-time system
 @st.cache_resource
 # News fetching functions
@@ -473,7 +873,7 @@ def display_realtime_dashboard(system, tickers: List[str], portfolio: Dict[str, 
         return
     
     # Create tabs for different views
-    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["🔍 Anomaly Detection", "💭 Sentiment Analysis", "📊 Trend Prediction", "🗓️ Seasonality", "🔮 Fusion Scores", "📂 Portfolio Specific"])
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs(["🔍 Anomaly Detection", "💭 Sentiment Analysis", "📊 Trend Prediction", "🗓️ Seasonality", "🔮 Fusion Scores", "📂 Portfolio Specific", "📈 Analysis Dashboard", "📊 Validation & Backtesting"])
     
     with tab1:
         display_anomaly_analysis(analysis_results)
@@ -498,6 +898,259 @@ def display_realtime_dashboard(system, tickers: List[str], portfolio: Dict[str, 
     
     with tab6:
         display_portfolio_specific(analysis_results, system, portfolio)
+    
+    with tab7:
+        st.header("📈 Analysis Dashboard")
+        st.markdown("---")
+        
+        # Load analysis data
+        with st.spinner("Loading analysis data..."):
+            backtesting_df, summary_df, metrics_df = load_analysis_data()
+        
+        if backtesting_df is None and summary_df is None and metrics_df is None:
+            st.error("❌ No analysis data found. Please run the analysis components first.")
+            st.info("💡 Run: `python simple_analysis_runner.py` to generate the analysis data")
+        else:
+            # Create sub-tabs for different analysis views
+            analysis_tab1, analysis_tab2, analysis_tab3, analysis_tab4, analysis_tab5 = st.tabs([
+                "📊 Overview", 
+                "📈 Backtesting", 
+                "🔍 Anomaly Detection", 
+                "📊 Performance", 
+                "🏗️ Architecture"
+            ])
+            
+            with analysis_tab1:
+                st.header("📊 Key Performance Metrics")
+                create_metrics_overview(summary_df)
+                
+                st.header("📈 Quick Overview Charts")
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    create_backtesting_chart(backtesting_df)
+                
+                with col2:
+                    create_anomaly_detection_chart(backtesting_df)
+            
+            with analysis_tab2:
+                st.header("📈 Backtesting Results")
+                create_candlestick_chart(backtesting_df)
+                create_data_tables(backtesting_df, metrics_df)
+            
+            with analysis_tab3:
+                st.header("🔍 Anomaly Detection Analysis")
+                create_anomaly_detection_chart(backtesting_df)
+                
+                if backtesting_df is not None and not backtesting_df.empty:
+                    anomaly_count = backtesting_df['Is_Anomaly'].sum()
+                    total_count = len(backtesting_df)
+                    anomaly_rate = (anomaly_count / total_count) * 100
+                    
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("Total Data Points", total_count)
+                    with col2:
+                        st.metric("Anomalies Detected", anomaly_count)
+                    with col3:
+                        st.metric("Anomaly Rate", f"{anomaly_rate:.2f}%")
+            
+            with analysis_tab4:
+                st.header("📊 Performance Analysis")
+                create_performance_chart(backtesting_df)
+                create_data_tables(backtesting_df, metrics_df)
+            
+            with analysis_tab5:
+                st.header("🏗️ System Architecture")
+                create_architecture_diagram()
+                
+                st.markdown("""
+                ### System Components:
+                - **Data Sources**: Market data, news feeds, economic indicators
+                - **Data Ingestion**: Real-time data collection and preprocessing
+                - **Data Processing**: Feature engineering and data transformation
+                - **ML Models**: Core machine learning model infrastructure
+                - **Anomaly Detection**: Identifies unusual patterns in market data
+                - **Sentiment Analysis**: Analyzes news and social media sentiment
+                - **Trend Prediction**: Predicts future price movements
+                - **Portfolio Analysis**: Evaluates portfolio performance and risk
+                - **Fusion Engine**: Combines all analysis results into unified insights
+                - **Decision Engine**: Generates trading recommendations and alerts
+                - **Real-time Dashboard**: Live visualization and monitoring interface
+                - **Alerts System**: Automated notification system for critical events
+                - **API Endpoints**: RESTful API for external integrations
+                - **Database**: Persistent storage for historical data and results
+                """)
+    
+    with tab8:
+        st.header("📊 Validation & Backtesting")
+        st.markdown("---")
+        
+        # Load analysis data
+        with st.spinner("Loading validation data..."):
+            backtesting_df, summary_df, metrics_df = load_analysis_data()
+        
+        if backtesting_df is None and summary_df is None and metrics_df is None:
+            st.error("❌ No validation data found. Please run the analysis components first.")
+            st.info("💡 Run: `python simple_analysis_runner.py` to generate the validation data")
+        else:
+            # Create validation tabs
+            validation_tab1, validation_tab2, validation_tab3, validation_tab4 = st.tabs([
+                "📊 Validation Results", 
+                "📈 Backtesting Analysis", 
+                "🔍 Anomaly Validation", 
+                "📊 Performance Validation"
+            ])
+            
+            with validation_tab1:
+                st.header("📊 Validation Results Summary")
+                if summary_df is not None and not summary_df.empty:
+                    summary = summary_df.iloc[0]
+                    col1, col2, col3, col4 = st.columns(4)
+                    
+                    with col1:
+                        st.metric("Total Days", f"{summary.get('Total_Days', 'N/A')}")
+                    with col2:
+                        st.metric("Mean Error", f"{summary.get('Mean_Absolute_Percentage_Error', 'N/A')}%")
+                    with col3:
+                        st.metric("Direction Accuracy", f"{summary.get('Direction_Accuracy', 'N/A')}%")
+                    with col4:
+                        st.metric("Anomaly Rate", f"{summary.get('Anomaly_Rate', 'N/A')}%")
+                
+                # Validation chart
+                if backtesting_df is not None and not backtesting_df.empty:
+                    fig = go.Figure()
+                    fig.add_trace(go.Scatter(
+                        x=backtesting_df['Date'],
+                        y=backtesting_df['Actual_Price'],
+                        mode='lines+markers',
+                        name='Actual Price',
+                        line=dict(color='#2ecc71', width=3)
+                    ))
+                    fig.add_trace(go.Scatter(
+                        x=backtesting_df['Date'],
+                        y=backtesting_df['Predicted_Price'],
+                        mode='lines+markers',
+                        name='Predicted Price',
+                        line=dict(color='#3498db', width=3)
+                    ))
+                    fig.update_layout(
+                        title='Validation: Actual vs Predicted Prices',
+                        xaxis_title='Date',
+                        yaxis_title='Price',
+                        height=500
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+            
+            with validation_tab2:
+                st.header("📈 Backtesting Analysis")
+                if backtesting_df is not None and not backtesting_df.empty:
+                    # Backtesting metrics
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("Mean Absolute Error", f"{backtesting_df['Absolute_Error'].mean():.4f}")
+                    with col2:
+                        st.metric("Mean Percentage Error", f"{backtesting_df['Percentage_Error'].mean():.2f}%")
+                    with col3:
+                        st.metric("Direction Accuracy", f"{backtesting_df['Direction_Correct'].mean() * 100:.1f}%")
+                    
+                    # Backtesting table
+                    st.subheader("📊 Backtesting Results Table")
+                    display_df = backtesting_df[['Date', 'Actual_Price', 'Predicted_Price', 'Difference', 'Percentage_Error', 'Performance_Grade']].head(15)
+                    st.dataframe(display_df, use_container_width=True)
+            
+            with validation_tab3:
+                st.header("🔍 Anomaly Validation")
+                if backtesting_df is not None and not backtesting_df.empty:
+                    # Anomaly validation metrics
+                    anomaly_count = backtesting_df['Is_Anomaly'].sum()
+                    total_count = len(backtesting_df)
+                    anomaly_rate = (anomaly_count / total_count) * 100
+                    
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("Total Data Points", total_count)
+                    with col2:
+                        st.metric("Anomalies Detected", anomaly_count)
+                    with col3:
+                        st.metric("Anomaly Rate", f"{anomaly_rate:.2f}%")
+                    
+                    # Anomaly validation chart
+                    fig = go.Figure()
+                    normal_data = backtesting_df[~backtesting_df['Is_Anomaly']]
+                    anomaly_data = backtesting_df[backtesting_df['Is_Anomaly']]
+                    
+                    fig.add_trace(go.Scatter(
+                        x=normal_data['Date'],
+                        y=normal_data['Actual_Price'],
+                        mode='lines+markers',
+                        name='Normal',
+                        line=dict(color='#95a5a6', width=2)
+                    ))
+                    
+                    if not anomaly_data.empty:
+                        fig.add_trace(go.Scatter(
+                            x=anomaly_data['Date'],
+                            y=anomaly_data['Actual_Price'],
+                            mode='markers',
+                            name='Anomaly',
+                            marker=dict(color='#e74c3c', size=12, symbol='x')
+                        ))
+                    
+                    fig.update_layout(
+                        title='Anomaly Validation Results',
+                        xaxis_title='Date',
+                        yaxis_title='Price',
+                        height=400
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+            
+            with validation_tab4:
+                st.header("📊 Performance Validation")
+                if backtesting_df is not None and not backtesting_df.empty:
+                    # Performance validation metrics
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("Average Confidence", f"{backtesting_df['Model_Confidence'].mean():.3f}")
+                    with col2:
+                        st.metric("Max Error", f"{backtesting_df['Percentage_Error'].max():.2f}%")
+                    with col3:
+                        st.metric("Min Error", f"{backtesting_df['Percentage_Error'].min():.2f}%")
+                    
+                    # Performance validation chart
+                    fig = make_subplots(
+                        rows=2, cols=1,
+                        subplot_titles=('Error Over Time', 'Confidence Over Time'),
+                        vertical_spacing=0.1
+                    )
+                    
+                    fig.add_trace(
+                        go.Scatter(
+                            x=backtesting_df['Date'],
+                            y=backtesting_df['Percentage_Error'],
+                            mode='lines+markers',
+                            name='Error %',
+                            line=dict(color='#e74c3c', width=2)
+                        ),
+                        row=1, col=1
+                    )
+                    
+                    fig.add_trace(
+                        go.Scatter(
+                            x=backtesting_df['Date'],
+                            y=backtesting_df['Model_Confidence'],
+                            mode='lines+markers',
+                            name='Confidence',
+                            line=dict(color='#3498db', width=2)
+                        ),
+                        row=2, col=1
+                    )
+                    
+                    fig.update_layout(
+                        title='Performance Validation Metrics',
+                        height=600
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
     
     # Performance Metrics Summary
     st.subheader("🎯 Performance Metrics Summary")

@@ -1,0 +1,2 @@
+Total_Days,Mean_Absolute_Error,Mean_Absolute_Percentage_Error,Direction_Accuracy,Average_Confidence,Anomaly_Rate,Best_Performance_Day,Worst_Performance_Day
+30,0.7747,0.78,90.0,0.8,16.67,2024-01-25,2024-01-23
