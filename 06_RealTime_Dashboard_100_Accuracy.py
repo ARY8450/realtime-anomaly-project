@@ -161,9 +161,9 @@ def create_backtesting_chart(backtesting_df):
         height=500
     )
     
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, key="backtesting_chart")
 
-def create_anomaly_detection_chart(backtesting_df):
+def create_anomaly_detection_chart(backtesting_df, chart_key="anomaly_detection_chart"):
     """Create anomaly detection chart"""
     if backtesting_df is None or backtesting_df.empty:
         st.warning("No anomaly data available")
@@ -209,7 +209,7 @@ def create_anomaly_detection_chart(backtesting_df):
         height=400
     )
     
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, key=chart_key)
 
 def create_candlestick_chart(backtesting_df):
     """Create candlestick chart with predictions"""
@@ -272,7 +272,7 @@ def create_candlestick_chart(backtesting_df):
         showlegend=True
     )
     
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, key="candlestick_chart")
 
 def create_performance_chart(backtesting_df):
     """Create performance metrics chart"""
@@ -322,7 +322,7 @@ def create_performance_chart(backtesting_df):
     fig.update_yaxes(title_text="Error %", row=1, col=1)
     fig.update_yaxes(title_text="Confidence Score", row=2, col=1)
     
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, key="performance_chart")
 
 def create_architecture_diagram():
     """Create system architecture diagram"""
@@ -424,7 +424,7 @@ def create_architecture_diagram():
         width=800
     )
     
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, key="architecture_diagram")
 
 def create_data_tables(backtesting_df, metrics_df):
     """Create data tables"""
@@ -847,12 +847,12 @@ def display_realtime_dashboard(system, tickers: List[str], portfolio: Dict[str, 
                     color_discrete_map={
                         'STRONG_BUY': '#00ff00',
                         'BUY': '#90ee90',
-                        'HOLD': '#ffff00',
-                        'SELL': '#ffa500',
-                        'STRONG_SELL': '#ff0000'
-                    }
-                )
-                st.plotly_chart(fig_pie, use_container_width=True)
+                    'HOLD': '#ffff00',
+                    'SELL': '#ffa500',
+                    'STRONG_SELL': '#ff0000'
+                }
+            )
+            st.plotly_chart(fig_pie, use_container_width=True, key="portfolio_recommendations_pie")
         
         with col3:
             # Holdings breakdown
@@ -931,7 +931,7 @@ def display_realtime_dashboard(system, tickers: List[str], portfolio: Dict[str, 
                     create_backtesting_chart(backtesting_df)
                 
                 with col2:
-                    create_anomaly_detection_chart(backtesting_df)
+                    create_anomaly_detection_chart(backtesting_df, "analysis_overview_anomaly_chart")
             
             with analysis_tab2:
                 st.header("📈 Backtesting Results")
@@ -940,7 +940,7 @@ def display_realtime_dashboard(system, tickers: List[str], portfolio: Dict[str, 
             
             with analysis_tab3:
                 st.header("🔍 Anomaly Detection Analysis")
-                create_anomaly_detection_chart(backtesting_df)
+                create_anomaly_detection_chart(backtesting_df, "analysis_tab3_anomaly_chart")
                 
                 if backtesting_df is not None and not backtesting_df.empty:
                     anomaly_count = backtesting_df['Is_Anomaly'].sum()
@@ -1040,7 +1040,7 @@ def display_realtime_dashboard(system, tickers: List[str], portfolio: Dict[str, 
                         yaxis_title='Price',
                         height=500
                     )
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, use_container_width=True, key="validation_price_chart")
             
             with validation_tab2:
                 st.header("📈 Backtesting Analysis")
@@ -1103,7 +1103,7 @@ def display_realtime_dashboard(system, tickers: List[str], portfolio: Dict[str, 
                         yaxis_title='Price',
                         height=400
                     )
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, use_container_width=True, key="sentiment_trend_chart")
             
             with validation_tab4:
                 st.header("📊 Performance Validation")
@@ -1150,7 +1150,7 @@ def display_realtime_dashboard(system, tickers: List[str], portfolio: Dict[str, 
                         title='Performance Validation Metrics',
                         height=600
                     )
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, use_container_width=True, key="sentiment_score_chart")
     
     # Performance Metrics Summary
     st.subheader("🎯 Performance Metrics Summary")
@@ -1191,7 +1191,7 @@ def display_anomaly_analysis(analysis_results: Dict[str, Any]):
             title="Real-Time Anomaly Scores"
         )
         fig.update_layout(height=400)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, key="seasonality_chart")
         
         # Performance metrics
         col1, col2 = st.columns(2)
@@ -1216,7 +1216,7 @@ def display_anomaly_analysis(analysis_results: Dict[str, Any]):
                         title="Anomaly Detection Performance",
                         barmode='group'
                     )
-                    st.plotly_chart(fig_bar, use_container_width=True)
+                    st.plotly_chart(fig_bar, use_container_width=True, key="seasonality_bar_chart")
                 else:
                     st.write("📊 Performance metrics data not available")
             except Exception as e:
@@ -1278,7 +1278,7 @@ def display_sentiment_analysis(analysis_results: Dict[str, Any], selected_ticker
             height=200 * rows,
             title="Real-Time Sentiment Analysis"
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, key="fusion_score_chart")
         
         # Performance metrics and detailed table
         col1, col2 = st.columns(2)
@@ -1332,7 +1332,7 @@ def display_trend_analysis(analysis_results: Dict[str, Any]):
             hover_data=['Ticker', 'Volatility'],
             title="Trend Strength vs Confidence"
         )
-        st.plotly_chart(fig_scatter, use_container_width=True)
+        st.plotly_chart(fig_scatter, use_container_width=True, key="fusion_scatter_chart")
         
         # Performance metrics
         col1, col2 = st.columns(2)
@@ -1444,7 +1444,7 @@ def display_trend_analysis(analysis_results: Dict[str, Any]):
                         showlegend=True
                     )
                     
-                    st.plotly_chart(fig_pred, use_container_width=True)
+                    st.plotly_chart(fig_pred, use_container_width=True, key="trend_prediction_chart")
                     
                     # Prediction summary
                     col1, col2, col3 = st.columns(3)
@@ -1508,7 +1508,7 @@ def display_seasonality_analysis(analysis_results: Dict[str, Any]):
             showlegend=True,
             title="Seasonality Patterns"
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, key="portfolio_performance_chart")
         
         # Detailed table
         st.dataframe(df, use_container_width=True)
@@ -1547,7 +1547,7 @@ def display_fusion_analysis(analysis_results: Dict[str, Any]):
             title="Fusion Score Rankings",
             orientation='h'
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, key="portfolio_allocation_chart")
         
         # Component breakdown stacked bar
         components_df = df[['Ticker', 'Anomaly Component', 'Sentiment Component', 'Trend Component', 'Seasonal Component']]
@@ -1570,7 +1570,7 @@ def display_fusion_analysis(analysis_results: Dict[str, Any]):
             title="Fusion Score Components Breakdown",
             yaxis_title="Component Score"
         )
-        st.plotly_chart(fig_stacked, use_container_width=True)
+        st.plotly_chart(fig_stacked, use_container_width=True, key="portfolio_stacked_chart")
         
         # Performance metrics
         avg_precision = df['Precision'].mean()
@@ -1632,7 +1632,7 @@ def display_performance_metrics(analysis_results: Dict[str, Any]):
                 barmode='group'
             )
             fig_bar.update_layout(height=400)
-            st.plotly_chart(fig_bar, use_container_width=True)
+            st.plotly_chart(fig_bar, use_container_width=True, key="portfolio_bar_chart")
             
         except Exception as e:
             st.warning(f"Could not create performance heatmap: {e}")
@@ -1712,7 +1712,7 @@ def display_live_data_streams(live_data: Dict[str, pd.DataFrame]):
                 height=600,
                 xaxis_rangeslider_visible=False
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, use_container_width=True, key="portfolio_technical_chart")
             
             # Technical indicators
             col1, col2 = st.columns(2)
@@ -1722,12 +1722,12 @@ def display_live_data_streams(live_data: Dict[str, pd.DataFrame]):
                     fig_rsi = px.line(df, y='rsi', title="RSI")
                     fig_rsi.add_hline(y=70, line_dash="dash", line_color="red")
                     fig_rsi.add_hline(y=30, line_dash="dash", line_color="green")
-                    st.plotly_chart(fig_rsi, use_container_width=True)
+                    st.plotly_chart(fig_rsi, use_container_width=True, key="portfolio_rsi_chart")
             
             with col2:
                 if 'volatility_1min' in df.columns:
                     fig_vol = px.line(df, y='volatility_1min', title="1-Minute Volatility")
-                    st.plotly_chart(fig_vol, use_container_width=True)
+                    st.plotly_chart(fig_vol, use_container_width=True, key="portfolio_volume_chart")
 
 # Helper functions
 def get_sentiment_label(score: float) -> str:
