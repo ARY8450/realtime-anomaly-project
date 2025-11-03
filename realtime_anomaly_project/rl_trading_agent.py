@@ -244,6 +244,9 @@ class RLTradingAgent:
         self.model_path = model_path
         self.model = None
         self.env = None
+        
+        # Try to load existing model on initialization
+        self.load_model()
 
     def create_environments(self, train_data: pd.DataFrame, eval_data: pd.DataFrame):
         """Create training and evaluation environments."""
@@ -311,6 +314,105 @@ class RLTradingAgent:
         if self.model is None:
             raise ValueError("Model not loaded. Call load_model() first.")
 
+        action, _ = self.model.predict(observation, deterministic=True)
+        return int(action)
+    
+    def predict_from_price_data(self, ticker: str, price_data: pd.DataFrame) -> int:
+        """
+        Predict trading action from raw price data.
+        Converts price data to proper observation format first.
+        """
+        if self.model is None:
+            # No trained model available - use simple rule-based fallback
+            if price_data is None or price_data.empty or len(price_data) < 5:
+                return 1  # HOLD when insufficient data
+            
+            # Simple momentum-based decision
+            recent_prices = price_data['Close'].tail(5)
+            price_change = (recent_prices.iloc[-1] - recent_prices.iloc[0]) / recent_prices.iloc[0]
+            
+            if price_change > 0.02:  # 2% gain
+                return 2  # BUY
+            elif price_change < -0.02:  # 2% loss
+                return 0  # SELL
+            else:
+                return 1  # HOLD
+        
+        if price_data is None or price_data.empty or len(price_data) < 20:
+            raise ValueError("Insufficient price data for prediction")
+        
+        # Calculate basic technical indicators from price data
+        data = price_data.copy()
+        
+        # Calculate moving averages
+        data['sma_5'] = data['Close'].rolling(window=5).mean()
+        data['sma_10'] = data['Close'].rolling(window=10).mean()
+        data['sma_20'] = data['Close'].rolling(window=20).mean()
+        
+        # Calculate RSI
+        delta = data['Close'].astype(float).diff()
+        gain = delta.where(delta > 0, 0).rolling(window=14).mean()
+        loss = (-delta).where(delta < 0, 0).rolling(window=14).mean()
+        rs = gain / (loss + 1e-8)  # Add small epsilon to avoid division by zero
+        data['rsi'] = 100 - (100 / (1 + rs))
+        
+        # Calculate MACD
+        exp1 = data['Close'].ewm(span=12).mean()
+        exp2 = data['Close'].ewm(span=26).mean()
+        data['macd'] = exp1 - exp2
+        data['macd_signal'] = data['macd'].ewm(span=9).mean()
+        
+        # Calculate Bollinger Bands
+        bb_period = 20
+        data['bb_middle'] = data['Close'].rolling(window=bb_period).mean()
+        bb_std = data['Close'].rolling(window=bb_period).std()
+        data['bb_upper'] = data['bb_middle'] + (bb_std * 2)
+        data['bb_lower'] = data['bb_middle'] - (bb_std * 2)
+        
+        # Calculate volume indicators
+        data['volume_sma'] = data['Volume'].rolling(window=10).mean() if 'Volume' in data.columns else 0
+        
+        # Get the most recent row with valid data
+        data = data.dropna()
+        if data.empty:
+            raise ValueError("No valid data after calculating indicators")
+        
+        current_data = data.iloc[-1]
+        
+        # Create observation vector (36 features expected)
+        tech_indicators = np.array([
+            current_data['Close'],
+            current_data['sma_5'],
+            current_data['sma_10'], 
+            current_data['sma_20'],
+            current_data['rsi'],
+            current_data['macd'],
+            current_data['macd_signal'],
+            current_data['bb_upper'],
+            current_data['bb_middle'],
+            current_data['bb_lower'],
+            current_data.get('volume_sma', 0),
+            # Add more technical indicators to reach 36 features
+            current_data['Close'] / current_data['sma_5'] if current_data['sma_5'] > 0 else 1,
+            current_data['Close'] / current_data['sma_10'] if current_data['sma_10'] > 0 else 1,
+            current_data['Close'] / current_data['sma_20'] if current_data['sma_20'] > 0 else 1,
+            (current_data['Close'] - current_data['bb_lower']) / (current_data['bb_upper'] - current_data['bb_lower']) if (current_data['bb_upper'] - current_data['bb_lower']) > 0 else 0.5,
+        ], dtype=np.float32)
+        
+        # Pad to 36 features if needed
+        if len(tech_indicators) < 36:
+            padding = np.zeros(36 - len(tech_indicators), dtype=np.float32)
+            tech_indicators = np.concatenate([tech_indicators, padding])
+        elif len(tech_indicators) > 36:
+            tech_indicators = tech_indicators[:36]
+        
+        # Add position and balance info (3 features) - use defaults for prediction
+        position_info = np.array([0, 1.0, 0], dtype=np.float32)  # neutral position, full balance, no P&L
+        
+        # Combine all features (39 total: 36 + 3)
+        observation = np.concatenate([tech_indicators, position_info])
+        
+        # Make prediction
         action, _ = self.model.predict(observation, deterministic=True)
         return int(action)
 
