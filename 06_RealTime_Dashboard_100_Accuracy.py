@@ -23,6 +23,7 @@ from bs4 import BeautifulSoup
 import yfinance as yf
 import re
 from realtime_anomaly_project.rl_trading_agent import RLTradingAgent
+from scipy import stats
 warnings.filterwarnings('ignore')
 
 # Add project root to path
@@ -913,6 +914,322 @@ def display_seasonality_analysis(analysis_results: Dict[str, Any]):
         
         # Detailed table
         st.dataframe(df, use_container_width=True)
+        
+        # Add ACF/PACF Analysis Section
+        st.subheader("📈 ACF/PACF Time Series Analysis")
+        
+        # Ticker selection for ACF/PACF
+        ticker_list = list(analysis_results.keys())
+        if ticker_list:
+            selected_ticker_acf = st.selectbox("Select ticker for ACF/PACF analysis", ticker_list, key="acf_pacf_ticker")
+            
+            if selected_ticker_acf:
+                display_acf_pacf_analysis(selected_ticker_acf)
+        else:
+            st.info("No tickers available for ACF/PACF analysis")
+
+def display_acf_pacf_analysis(ticker: str):
+    """Display ACF and PACF analysis for a selected ticker"""
+    try:
+        import yfinance as yf
+        
+        # Fetch data for the ticker
+        with st.spinner(f"Fetching data for {ticker}..."):
+            data = yf.download(ticker, period="1y", progress=False)
+            
+        if data is None or data.empty:
+            st.warning(f"No data available for {ticker}")
+            return
+            
+        # Calculate returns for ACF/PACF analysis
+        returns = data['Close'].pct_change().dropna()
+        
+        if len(returns) < 50:
+            st.warning(f"Insufficient data for reliable ACF/PACF analysis (need 50+ points, got {len(returns)})")
+            return
+            
+        # Calculate common variables
+        nlags = min(40, len(returns) // 4)
+        n = len(returns)
+        bound = 1.96 / np.sqrt(n) if n > 0 else 0.05  # Confidence bound
+            
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.subheader("🔄 Autocorrelation Function (ACF)")
+            try:
+                # Try to use statsmodels ACF
+                try:
+                    from statsmodels.tsa.stattools import acf
+                    # Ensure we have a proper numpy array
+                    returns_array = np.array(returns.values, dtype=float)
+                    acf_result = acf(returns_array, nlags=nlags, fft=True, missing='conservative')
+                    acf_values = pd.Series(np.abs(acf_result[1:]), index=range(1, len(acf_result)))
+                    
+                    # Create ACF plot
+                    fig_acf = go.Figure()
+                    fig_acf.add_trace(go.Bar(
+                        x=acf_values.index,
+                        y=acf_values.values,
+                        name='ACF',
+                        marker_color='blue'
+                    ))
+                    
+                    # Add significance bounds
+                    fig_acf.add_hline(y=bound, line_dash="dash", line_color="red", 
+                                     annotation_text="95% Confidence")
+                    fig_acf.add_hline(y=-bound, line_dash="dash", line_color="red")
+                    
+                    fig_acf.update_layout(
+                        title=f"ACF - {ticker}",
+                        xaxis_title="Lag",
+                        yaxis_title="Autocorrelation",
+                        height=400
+                    )
+                    st.plotly_chart(fig_acf, use_container_width=True)
+                    
+                    # ACF interpretation
+                    try:
+                        significant_lags = acf_values[acf_values > bound].index.tolist()
+                        if significant_lags:
+                            lag_str = ", ".join(map(str, significant_lags[:5]))
+                            st.info(f"📊 Significant autocorrelations at lags: {lag_str}")
+                        else:
+                            st.success("✅ No significant autocorrelations detected (good for randomness)")
+                    except Exception as interp_error:
+                        st.info("📊 ACF analysis completed - check visual chart for patterns")
+                        
+                except ImportError:
+                    raise Exception("Statsmodels not available, using fallback")
+                    
+            except Exception as e:
+                st.warning(f"Advanced ACF calculation failed: {str(e)}")
+                # Fallback: Simple correlation plot using numpy
+                try:
+                    lags = range(1, min(21, len(returns)))
+                    simple_acf = []
+                    returns_array = np.array(returns.values, dtype=float)
+                    
+                    for lag in lags:
+                        if len(returns_array) > lag:
+                            # Manual autocorrelation calculation
+                            correlation = np.corrcoef(returns_array[:-lag], returns_array[lag:])[0, 1]
+                            simple_acf.append(correlation if not np.isnan(correlation) else 0)
+                        else:
+                            simple_acf.append(0)
+                    
+                    fig_simple = go.Figure()
+                    fig_simple.add_trace(go.Bar(x=list(lags), y=simple_acf, name='Simple ACF'))
+                    fig_simple.update_layout(title=f"Simple ACF - {ticker}", height=400)
+                    st.plotly_chart(fig_simple, use_container_width=True)
+                    st.info("Using simplified ACF calculation")
+                except Exception as fallback_error:
+                    st.error(f"ACF calculation failed: {str(fallback_error)}")
+        
+        with col2:
+            st.subheader("📉 Partial Autocorrelation Function (PACF)")
+            try:
+                # Try to use statsmodels PACF with valid method
+                try:
+                    from statsmodels.tsa.stattools import pacf
+                    # Ensure we have a proper numpy array
+                    returns_array = np.array(returns.values, dtype=float)
+                    pacf_result = pacf(returns_array, nlags=nlags, method='ols')
+                    pacf_values = pd.Series(np.abs(pacf_result[1:]), index=range(1, len(pacf_result)))
+                    
+                    # Create PACF plot
+                    fig_pacf = go.Figure()
+                    fig_pacf.add_trace(go.Bar(
+                        x=pacf_values.index,
+                        y=pacf_values.values,
+                        name='PACF',
+                        marker_color='green'
+                    ))
+                    
+                    # Add significance bounds
+                    fig_pacf.add_hline(y=bound, line_dash="dash", line_color="red",
+                                      annotation_text="95% Confidence")
+                    fig_pacf.add_hline(y=-bound, line_dash="dash", line_color="red")
+                    
+                    fig_pacf.update_layout(
+                        title=f"PACF - {ticker}",
+                        xaxis_title="Lag",
+                        yaxis_title="Partial Autocorrelation",
+                        height=400
+                    )
+                    st.plotly_chart(fig_pacf, use_container_width=True)
+                    
+                    # PACF interpretation
+                    try:
+                        significant_pacf_lags = pacf_values[pacf_values > bound].index.tolist()
+                        if significant_pacf_lags:
+                            pacf_lag_str = ", ".join(map(str, significant_pacf_lags[:5]))
+                            st.info(f"📊 Significant partial autocorrelations at lags: {pacf_lag_str}")
+                            st.write("💡 **Interpretation**: These lags suggest potential AR model orders")
+                        else:
+                            st.success("✅ No significant partial autocorrelations (data appears random)")
+                    except Exception as pacf_interp_error:
+                        st.info("📊 PACF analysis completed - check visual chart for patterns")
+                        
+                except ImportError:
+                    raise Exception("Statsmodels not available, using fallback")
+                    
+            except Exception as e:
+                st.warning(f"Advanced PACF calculation failed: {str(e)}")
+                # Fallback: Simplified PACF using linear regression
+                try:
+                    pacf_simple = []
+                    lags = range(1, min(11, len(returns) // 4))
+                    
+                    for lag in lags:
+                        if len(returns) > lag + 1:
+                            try:
+                                # Simple correlation between current and lagged values  
+                                returns_array = np.array(returns.values, dtype=float)
+                                y = returns_array[lag:]
+                                x = returns_array[:-lag]
+                                if len(y) > 0 and len(x) > 0:
+                                    correlation = np.corrcoef(y, x)[0, 1]
+                                    pacf_simple.append(abs(correlation) if not np.isnan(correlation) else 0)
+                                else:
+                                    pacf_simple.append(0)
+                            except:
+                                pacf_simple.append(0)
+                        else:
+                            pacf_simple.append(0)
+                    
+                    if pacf_simple:  # Only create chart if we have data
+                        fig_simple_pacf = go.Figure()
+                        fig_simple_pacf.add_trace(go.Bar(x=list(lags), y=pacf_simple, name='Simple PACF', marker_color='green'))
+                        fig_simple_pacf.update_layout(title=f"Simple PACF - {ticker}", height=400)
+                        st.plotly_chart(fig_simple_pacf, use_container_width=True)
+                        st.info("Using simplified PACF approximation")
+                    else:
+                        st.warning("Unable to calculate PACF - insufficient data")
+                except Exception as fallback_error:
+                    st.error(f"PACF calculation failed: {str(fallback_error)}")
+        
+        # Summary insights
+        st.subheader("🧠 Time Series Insights")
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            # Calculate annualized volatility with proper error handling
+            try:
+                if len(returns) > 1:
+                    # Convert to numpy array for reliable calculation
+                    returns_array = np.array(returns.values, dtype=float)
+                    volatility = np.std(returns_array, ddof=1) * np.sqrt(252)
+                    if not np.isnan(volatility) and volatility > 0:
+                        st.metric("Annualized Volatility", f"{volatility:.2%}")
+                    else:
+                        st.metric("Annualized Volatility", "0.00%")
+                else:
+                    st.metric("Annualized Volatility", "Insufficient Data")
+            except Exception as e:
+                st.metric("Annualized Volatility", "Error")
+            
+        with col2:
+            # Check for trend with improved calculation
+            try:
+                if len(returns) > 5:  # Need at least 5 data points for reliable trend
+                    # Calculate cumulative returns
+                    cum_returns = returns.cumsum()
+                    first_val = float(cum_returns.iloc[0])
+                    last_val = float(cum_returns.iloc[-1])
+                    trend_diff = abs(last_val - first_val)
+                    
+                    # Also check the overall direction
+                    direction = "Up" if last_val > first_val else "Down"
+                    
+                    if trend_diff > 0.1:
+                        trend_strength = f"Strong {direction}"
+                    elif trend_diff > 0.05:
+                        trend_strength = f"Moderate {direction}"
+                    else:
+                        trend_strength = "Weak/Sideways"
+                        
+                    st.metric("Trend Strength", trend_strength)
+                else:
+                    st.metric("Trend Strength", "Insufficient Data")
+            except Exception as e:
+                st.metric("Trend Strength", "Calculation Error")
+            
+        with col3:
+            # Mean reversion indicator with improved calculation
+            try:
+                if len(returns) > 2:
+                    # Convert to numpy array for reliable calculation
+                    returns_array = np.array(returns.values, dtype=float)
+                    
+                    # Calculate lag-1 autocorrelation manually
+                    if len(returns_array) > 1:
+                        x = returns_array[:-1]
+                        y = returns_array[1:]
+                        
+                        # Calculate correlation coefficient
+                        corr_matrix = np.corrcoef(x, y)
+                        autocorr_lag1 = corr_matrix[0, 1] if not np.isnan(corr_matrix[0, 1]) else 0
+                        
+                        # Mean reversion indicator (higher = more mean reverting)
+                        mean_reversion = 1 - autocorr_lag1
+                        
+                        # Interpret the value
+                        if mean_reversion > 1.5:
+                            mr_label = f"{mean_reversion:.3f} (High)"
+                        elif mean_reversion > 1.2:
+                            mr_label = f"{mean_reversion:.3f} (Medium)"
+                        else:
+                            mr_label = f"{mean_reversion:.3f} (Low)"
+                            
+                        st.metric("Mean Reversion", mr_label)
+                    else:
+                        st.metric("Mean Reversion", "0.000 (No Data)")
+                else:
+                    st.metric("Mean Reversion", "Insufficient Data")
+            except Exception as e:
+                st.metric("Mean Reversion", "Calculation Error")
+        
+        # Additional insights
+        st.write("**📚 Interpretation Guide:**")
+        st.write("- **ACF**: Shows how current values relate to past values")
+        st.write("- **PACF**: Shows direct relationships after removing indirect effects")
+        st.write("- **Significant spikes**: Indicate patterns that could be modeled")
+        st.write("- **No spikes**: Suggests efficient market behavior (good for random walk)")
+        
+    except Exception as e:
+        st.error(f"Error in ACF/PACF analysis: {str(e)}")
+        st.info("🔄 Falling back to basic correlation analysis...")
+        
+        # Basic fallback analysis
+        try:
+            import yfinance as yf
+            data = yf.download(ticker, period="3mo", progress=False)
+            if data is not None and not data.empty:
+                returns = data['Close'].pct_change().dropna()
+                st.line_chart(returns.tail(50))
+                st.write(f"📊 Basic statistics for {ticker}:")
+                # Simple, safe statistical calculations to avoid format errors
+                try:
+                    st.write(f"- Mean return: {np.mean(returns):.4f}")
+                except:
+                    st.write("- Mean return: N/A")
+                
+                try:
+                    st.write(f"- Volatility: {np.std(returns):.4f}")
+                except:
+                    st.write("- Volatility: N/A")
+                
+                try:
+                    # Use scipy for skewness and kurtosis to avoid pandas formatting issues
+                    from scipy import stats as scipy_stats
+                    st.write(f"- Skewness: {scipy_stats.skew(returns):.4f}")
+                    st.write(f"- Kurtosis: {scipy_stats.kurtosis(returns):.4f}")
+                except:
+                    st.write("- Skewness: N/A")
+                    st.write("- Kurtosis: N/A")
+        except Exception as fallback_error:
+            st.error(f"Fallback analysis also failed: {str(fallback_error)}")
 
 def display_fusion_analysis(analysis_results: Dict[str, Any]):
     """Display fusion analysis results"""
