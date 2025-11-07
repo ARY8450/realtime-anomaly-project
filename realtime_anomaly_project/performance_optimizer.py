@@ -24,37 +24,60 @@ class PerformanceOptimizer:
         
     def create_advanced_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """
-        Create advanced technical features for better predictions
-        Returns engineered features that improve model accuracy
+        Create advanced technical features with user-requested indicators
+        Includes: VROC, Cumulative Return, EMA, OBV, Bid-Ask Spread
         """
         features = pd.DataFrame(index=df.index)
         
-        # Price-based features
+        # Normalize column names (yfinance returns capitalized columns)
+        df_cols = df.columns.str.lower() if hasattr(df.columns, 'str') else df.columns
+        df.columns = df_cols
+        
+        # ========== USER-REQUESTED FEATURES ==========
+        
+        # 1. Cumulative Return
+        features['cumulative_return'] = (1 + df['close'].pct_change()).cumprod() - 1
+        
+        # 2. Volume Rate of Change (VROC)
+        if 'volume' in df.columns:
+            features['vroc_5'] = df['volume'].pct_change(5)
+            features['vroc_10'] = df['volume'].pct_change(10)
+            features['vroc_20'] = df['volume'].pct_change(20)
+        
+        # 3. On-Balance Volume (OBV)
+        if 'volume' in df.columns:
+            features['obv'] = self._calculate_obv(df)
+            features['obv_ma'] = features['obv'].rolling(20).mean()
+            features['obv_signal'] = features['obv'] - features['obv_ma']
+        
+        # 4. Exponential Moving Average (EMA) - Extended
+        features['ema_9'] = df['close'].ewm(span=9, adjust=False).mean()
+        features['ema_12'] = df['close'].ewm(span=12, adjust=False).mean()
+        features['ema_26'] = df['close'].ewm(span=26, adjust=False).mean()
+        features['ema_50'] = df['close'].ewm(span=50, adjust=False).mean()
+        features['ema_cross_12_26'] = features['ema_12'] - features['ema_26']
+        features['price_to_ema12'] = df['close'] / features['ema_12']
+        features['price_to_ema26'] = df['close'] / features['ema_26']
+        
+        # 5. Bid-Ask Spread (using High-Low as proxy)
+        if 'high' in df.columns and 'low' in df.columns:
+            features['bid_ask_spread'] = (df['high'] - df['low']) / df['close']
+            features['spread_ma'] = features['bid_ask_spread'].rolling(20).mean()
+            features['spread_volatility'] = features['bid_ask_spread'].rolling(20).std()
+        
+        # ========== ORIGINAL BASELINE FEATURES ==========
+        
+        # Basic price features
         features['returns'] = df['close'].pct_change()
         features['log_returns'] = np.log(df['close'] / df['close'].shift(1))
-        features['volatility_5'] = features['returns'].rolling(5).std()
-        features['volatility_20'] = features['returns'].rolling(20).std()
+        features['volatility'] = features['returns'].rolling(20).std()
         
-        # Momentum indicators
+        # RSI
         features['rsi'] = self._calculate_rsi(df['close'], 14)
-        features['rsi_fast'] = self._calculate_rsi(df['close'], 7)
+        
+        # MACD
         features['macd'], features['macd_signal'] = self._calculate_macd(df['close'])
-        
-        # Trend indicators
-        features['sma_5'] = df['close'].rolling(5).mean()
-        features['sma_20'] = df['close'].rolling(20).mean()
-        features['sma_50'] = df['close'].rolling(50).mean()
-        features['ema_12'] = df['close'].ewm(span=12).mean()
-        features['ema_26'] = df['close'].ewm(span=26).mean()
-        
-        # Price position
-        features['price_to_sma20'] = df['close'] / features['sma_20']
-        features['price_to_sma50'] = df['close'] / features['sma_50']
-        
-        # Volume features
-        if 'volume' in df.columns:
-            features['volume_ratio'] = df['volume'] / df['volume'].rolling(20).mean()
-            features['volume_trend'] = df['volume'].rolling(5).mean() / df['volume'].rolling(20).mean()
+        features['macd_diff'] = features['macd'] - features['macd_signal']
         
         # Bollinger Bands
         bb_period = 20
@@ -64,12 +87,26 @@ class PerformanceOptimizer:
         features['bb_lower'] = bb_middle - (2 * bb_std)
         features['bb_position'] = (df['close'] - features['bb_lower']) / (features['bb_upper'] - features['bb_lower'])
         
-        # ATR (Average True Range)
+        # Moving Averages
+        features['sma_20'] = df['close'].rolling(20).mean()
+        features['sma_50'] = df['close'].rolling(50).mean()
+        features['ema_12'] = df['close'].ewm(span=12).mean()
+        features['ema_26'] = df['close'].ewm(span=26).mean()
+        
+        # Price relative to MAs
+        features['price_to_sma20'] = df['close'] / features['sma_20']
+        features['price_to_sma50'] = df['close'] / features['sma_50']
+        
+        # Volume features
+        if 'volume' in df.columns:
+            features['volume_ratio'] = df['volume'] / df['volume'].rolling(20).mean()
+        
+        # ATR
         features['atr'] = self._calculate_atr(df)
         
-        # Rate of change
-        features['roc_5'] = (df['close'] - df['close'].shift(5)) / df['close'].shift(5)
-        features['roc_10'] = (df['close'] - df['close'].shift(10)) / df['close'].shift(10)
+        # Lag features
+        features['return_lag_1'] = features['returns'].shift(1)
+        features['return_lag_2'] = features['returns'].shift(2)
         
         # Fill NaN values
         features = features.bfill().fillna(0)
@@ -105,6 +142,74 @@ class PerformanceOptimizer:
         true_range = ranges.max(axis=1)
         atr = true_range.rolling(period).mean()
         return atr
+    
+    def _calculate_stochastic(self, df: pd.DataFrame, period: int = 14) -> Tuple[pd.Series, pd.Series]:
+        """Calculate Stochastic Oscillator %K and %D"""
+        if 'high' not in df.columns or 'low' not in df.columns:
+            return pd.Series(50, index=df.index), pd.Series(50, index=df.index)
+        
+        low_min = df['low'].rolling(period).min()
+        high_max = df['high'].rolling(period).max()
+        stoch_k = 100 * (df['close'] - low_min) / (high_max - low_min)
+        stoch_d = stoch_k.rolling(3).mean()
+        return stoch_k, stoch_d
+    
+    def _calculate_williams_r(self, df: pd.DataFrame, period: int = 14) -> pd.Series:
+        """Calculate Williams %R"""
+        if 'high' not in df.columns or 'low' not in df.columns:
+            return pd.Series(-50, index=df.index)
+        
+        high_max = df['high'].rolling(period).max()
+        low_min = df['low'].rolling(period).min()
+        williams_r = -100 * (high_max - df['close']) / (high_max - low_min)
+        return williams_r
+    
+    def _calculate_obv(self, df: pd.DataFrame) -> pd.Series:
+        """Calculate On-Balance Volume"""
+        if 'volume' not in df.columns:
+            return pd.Series(0, index=df.index)
+        
+        price_diff = df['close'].diff()
+        obv = pd.Series(index=df.index, dtype=float)
+        obv.iloc[0] = df['volume'].iloc[0]
+        
+        for i in range(1, len(df)):
+            if price_diff.iloc[i] > 0:
+                obv.iloc[i] = obv.iloc[i-1] + df['volume'].iloc[i]
+            elif price_diff.iloc[i] < 0:
+                obv.iloc[i] = obv.iloc[i-1] - df['volume'].iloc[i]
+            else:
+                obv.iloc[i] = obv.iloc[i-1]
+        
+        return obv
+    
+    def _calculate_vpt(self, df: pd.DataFrame) -> pd.Series:
+        """Calculate Volume Price Trend"""
+        if 'volume' not in df.columns:
+            return pd.Series(0, index=df.index)
+        
+        vpt = (df['volume'] * df['close'].pct_change()).fillna(0).cumsum()
+        return vpt
+    
+    def _calculate_mfi(self, df: pd.DataFrame, period: int = 14) -> pd.Series:
+        """Calculate Money Flow Index"""
+        if 'volume' not in df.columns or 'high' not in df.columns or 'low' not in df.columns:
+            return pd.Series(50, index=df.index)
+        
+        typical_price = (df['high'] + df['low'] + df['close']) / 3
+        money_flow = typical_price * df['volume']
+        
+        positive_flow = pd.Series(0.0, index=df.index)
+        negative_flow = pd.Series(0.0, index=df.index)
+        
+        positive_flow[typical_price > typical_price.shift(1)] = money_flow[typical_price > typical_price.shift(1)]
+        negative_flow[typical_price < typical_price.shift(1)] = money_flow[typical_price < typical_price.shift(1)]
+        
+        positive_mf = positive_flow.rolling(period).sum()
+        negative_mf = negative_flow.rolling(period).sum()
+        
+        mfi = 100 - (100 / (1 + positive_mf / negative_mf))
+        return mfi.fillna(50)
     
     def train_ensemble_model(self, features: np.ndarray, target: np.ndarray) -> Dict[str, float]:
         """

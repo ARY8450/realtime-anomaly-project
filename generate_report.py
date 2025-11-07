@@ -1,0 +1,168 @@
+"""
+FEATURE USAGE ANALYSIS REPORT
+================================================================================
+
+SUMMARY:
+--------
+Total Features CALCULATED: 89
+Total Features USED by ML models: ALL 89
+
+BREAKDOWN BY CATEGORY:
+---------------------
+
+1. PRICE-BASED FEATURES: 11
+   ✓ returns, log_returns, returns_squared
+   ✓ volatility_5, volatility_10, volatility_20, volatility_60
+   ✓ vol_ratio_5_20, vol_ratio_10_60
+   ✓ volume_volatility, rsi_volatility (appears in 2 categories)
+
+2. MOMENTUM INDICATORS: 13
+   ✓ rsi (14-period), rsi_fast (7-period), rsi_slow (21-period), rsi_diff
+   ✓ macd, macd_signal, macd_diff, macd_histogram
+   ✓ stoch_k, stoch_d, stoch_diff (Stochastic Oscillator)
+   ✓ williams_r (Williams %R)
+   ✓ rsi_volatility (interaction feature)
+
+3. TREND INDICATORS (MOVING AVERAGES): 20
+   ✓ Simple Moving Averages: sma_5, sma_10, sma_20, sma_50, sma_100, sma_200
+   ✓ Exponential Moving Averages: ema_5, ema_12, ema_26, ema_50
+   ✓ MA Crossovers: sma_cross_5_20, sma_cross_20_50, sma_cross_50_200, ema_cross_12_26
+   ✓ Price-to-MA Ratios: price_to_sma5, price_to_sma20, price_to_sma50, 
+     price_to_sma200, price_to_ema12, price_to_ema26
+
+4. VOLUME FEATURES: 9
+   ✓ volume_ratio, volume_trend, volume_volatility
+   ✓ obv (On-Balance Volume), obv_ma, obv_trend
+   ✓ vpt (Volume Price Trend)
+   ✓ mfi (Money Flow Index)
+   ✓ volume_price_corr (interaction feature)
+
+5. BOLLINGER BANDS: 6
+   ✓ bb_upper, bb_lower, bb_middle
+   ✓ bb_position, bb_width, bb_percent
+
+6. VOLATILITY INDICATORS: 3
+   ✓ atr (Average True Range)
+   ✓ atr_percent, natr (Normalized ATR)
+
+7. RATE OF CHANGE: 9
+   ✓ roc_3, roc_5, roc_10, roc_20
+   ✓ momentum_5, momentum_10, momentum_20
+   ✓ acceleration_5, acceleration_10
+
+8. PRICE PATTERNS: 6
+   ✓ hl_spread, hl_ma (High-Low spread)
+   ✓ close_position (Close position in daily range)
+   ✓ donchian_high, donchian_low, donchian_position (Donchian Channels)
+
+9. STATISTICAL FEATURES: 4
+   ✓ zscore_20, zscore_60 (Z-scores)
+   ✓ percentile_20, percentile_60 (Percentile ranks)
+
+10. LAG FEATURES: 10
+    ✓ return_lag_1, return_lag_2, return_lag_3, return_lag_5, return_lag_10
+    ✓ close_lag_1, close_lag_2, close_lag_3, close_lag_5, close_lag_10
+
+11. INTERACTION FEATURES: 2
+    ✓ rsi_volatility (RSI × Volatility)
+    ✓ volume_price_corr (Volume-Price correlation)
+
+================================================================================
+
+HOW FEATURES ARE USED:
+----------------------
+
+1. FEATURE CREATION:
+   - All 89 features are created by PerformanceOptimizer.create_advanced_features()
+   - Located in: realtime_anomaly_project/performance_optimizer.py
+
+2. FEATURE USAGE IN ML MODELS:
+   - ALL 89 features are passed directly to AdvancedTrendPredictor
+   - NO feature selection is currently applied
+   - Models receive the full 89-feature dataset
+
+3. ML MODELS TRAINED:
+   - XGBoost (currently broken - API compatibility issue)
+   - LightGBM ✓ (working - uses all 89 features)
+   - CatBoost ✓ (working - uses all 89 features)
+   - LSTM (unavailable - TensorFlow not installed)
+   - Ensemble (voting classifier combining LightGBM + CatBoost)
+
+4. CURRENT PERFORMANCE:
+   With 89 features:
+   - LightGBM: 52.53% accuracy
+   - CatBoost: 53.54% accuracy
+   - Ensemble: 59.60% accuracy
+   
+   Previous with 23 features:
+   - CatBoost: 60.61% accuracy
+   
+   ⚠️ MORE FEATURES = WORSE PERFORMANCE (overfitting/curse of dimensionality)
+
+================================================================================
+
+PROBLEM ANALYSIS:
+-----------------
+
+✗ ISSUE: Too many features for available data
+  - 89 features for only 495 samples
+  - Ratio: ~5.5 samples per feature (need 10-20x more)
+  - Causes overfitting and noise learning
+
+✗ ISSUE: No feature selection implemented
+  - All 89 features used regardless of importance
+  - Many features likely redundant or correlated
+  - Need to identify top 30-40 most predictive features
+
+✗ ISSUE: XGBoost not working
+  - API compatibility issue with early_stopping_rounds
+  - Reduces ensemble diversity
+  - Missing a powerful model in voting
+
+================================================================================
+
+RECOMMENDED SOLUTIONS:
+---------------------
+
+1. IMPLEMENT FEATURE SELECTION:
+   ✓ Use SelectKBest to identify top 30-40 features
+   ✓ Use Recursive Feature Elimination (RFE)
+   ✓ Analyze feature importance from trained models
+   ✓ Remove highly correlated features (>0.95)
+
+2. FIX XGBOOST:
+   ✓ Update early_stopping_rounds to use callbacks parameter
+   ✓ Test compatibility with XGBoost 3.1.1 API
+
+3. INCREASE HYPERPARAMETER OPTIMIZATION:
+   ✓ Increase Optuna trials from 30 to 100+
+   ✓ Use more sophisticated search spaces
+   ✓ Implement cross-validation
+
+4. ADD MORE DATA:
+   ✓ Increase from 2 years to 5 years (495 → 1250+ samples)
+   ✓ Better ratio: 1250 samples / 40 features = 31.25 samples/feature
+
+5. INSTALL TENSORFLOW:
+   ✓ Add LSTM deep learning model to ensemble
+   ✓ Increase ensemble diversity
+
+================================================================================
+
+NEXT STEPS TO REACH 75-85% ACCURACY:
+------------------------------------
+
+Step 1: Fix XGBoost API compatibility ✓ (DONE - updated code)
+Step 2: Implement feature selection (SelectKBest top 30-40)
+Step 3: Test with reduced feature set
+Step 4: Increase Optuna trials to 100
+Step 5: Add more training data (5 years)
+Step 6: Install TensorFlow for LSTM model
+
+================================================================================
+"""
+
+with open("FEATURE_ANALYSIS_REPORT.txt", "w", encoding="utf-8") as f:
+    f.write(__doc__)
+
+print("Report saved to: FEATURE_ANALYSIS_REPORT.txt")

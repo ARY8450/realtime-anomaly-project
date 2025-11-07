@@ -303,9 +303,13 @@ class AdvancedTrendPredictor:
                 params['tree_method'] = 'gpu_hist'
                 params['gpu_id'] = 0
             
-            # Train model
+            # Train model - Use new XGBoost 3.x API
             model = xgb.XGBClassifier(**params)  # type: ignore[attr-defined]
-            model.fit(X_train, y_train, eval_set=[(X_val, y_val)], verbose=False, early_stopping_rounds=10)
+            model.fit(
+                X_train, y_train, 
+                eval_set=[(X_val, y_val)], 
+                verbose=False
+            )
             
             # Predict and calculate accuracy
             y_pred = model.predict(X_val)
@@ -427,7 +431,8 @@ class AdvancedTrendPredictor:
                 logger.info("Training XGBoost model...")
                 xgb_params = self.optimize_xgboost_hyperparameters(X_train, y_train, X_val, y_val, n_trials=30)
                 xgb_model = xgb.XGBClassifier(**xgb_params)
-                xgb_model.fit(X_train, y_train, eval_set=[(X_val, y_val)], verbose=False, early_stopping_rounds=20)
+                # Use new XGBoost 3.x API - no early_stopping_rounds parameter
+                xgb_model.fit(X_train, y_train, eval_set=[(X_val, y_val)], verbose=False)
                 models['xgboost'] = xgb_model
                 
                 # XGBoost predictions and metrics

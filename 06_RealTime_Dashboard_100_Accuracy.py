@@ -339,8 +339,6 @@ def display_news_articles(ticker: Optional[str] = None, portfolio_tickers: Optio
     if ticker:
         # Single ticker news - fetch up to 150 articles from 30+ sources
         news_articles = fetch_ticker_news(ticker, max_articles=150)
-        st.subheader(f"📰 Comprehensive News Brief for {ticker}")
-        st.caption(f"📡 Aggregating from 30+ premium sources including Reuters, Bloomberg, ET, MoneyControl, and more")
     elif portfolio_tickers:
         # Portfolio news - fetch from ALL portfolio tickers
         news_articles = []
@@ -351,8 +349,6 @@ def display_news_articles(ticker: Optional[str] = None, portfolio_tickers: Optio
         # Sort by published date
         news_articles.sort(key=lambda x: x.get('published', ''), reverse=True)
         news_articles = news_articles[:150]  # Analyze top 150 articles
-        st.subheader("📰 Comprehensive Portfolio News Brief")
-        st.caption(f"📡 Aggregating from 30+ premium sources across all portfolio tickers")
     else:
         st.info("No ticker selected for news display")
         return
@@ -602,7 +598,6 @@ def main():
             st.sidebar.success("🤖 RL Agent Ready (Trained Model)")
         else:
             st.sidebar.warning("🤖 RL Agent Ready (Rule-based Fallback)")
-            st.sidebar.info("💡 No trained model found. Using simple momentum-based decisions.")
         
         # Show agent performance metrics if available
         if hasattr(st.session_state.rl_agent, 'total_trades'):
@@ -2169,6 +2164,147 @@ def display_portfolio_specific(analysis_results: Dict[str, Any], realtime_system
         else:
             st.warning("⚠️ No portfolio tickers available for trade calls")
         
+        # Predicted Price Table
+        st.subheader("📊 Predicted Price Table (Next 7, 15, 30 Days)")
+        st.markdown("AI-powered price predictions using trend analysis and historical patterns")
+        
+        try:
+            price_predictions = []
+            
+            for ticker in portfolio_tickers:
+                try:
+                    # Fetch current price data
+                    ticker_obj = yf.Ticker(ticker)
+                    hist = ticker_obj.history(period="60d")
+                    
+                    if hist is not None and not hist.empty and len(hist) >= 30:
+                        current_price = hist['Close'].iloc[-1]
+                        
+                        # Get trend data from analysis results
+                        trend_data = analysis_results.get(ticker, {}).get('trend_prediction', {})
+                        trend_direction = trend_data.get('prediction', 'HOLD')
+                        trend_confidence = trend_data.get('confidence', 0.5)
+                        
+                        # Calculate price predictions based on historical volatility and trend
+                        returns = hist['Close'].pct_change().dropna()
+                        avg_return = returns.mean()
+                        volatility = returns.std()
+                        
+                        # Adjust predictions based on trend direction
+                        if trend_direction == 'BUY':
+                            trend_multiplier = 1 + (trend_confidence * 0.1)  # Up to 10% boost
+                        elif trend_direction == 'SELL':
+                            trend_multiplier = 1 - (trend_confidence * 0.1)  # Up to 10% reduction
+                        else:  # HOLD
+                            trend_multiplier = 1.0
+                        
+                        # Calculate predictions for different time horizons
+                        days_7_return = (avg_return * 7 * trend_multiplier)
+                        days_15_return = (avg_return * 15 * trend_multiplier)
+                        days_30_return = (avg_return * 30 * trend_multiplier)
+                        
+                        # Add volatility-based confidence intervals
+                        days_7_std = volatility * np.sqrt(7)
+                        days_15_std = volatility * np.sqrt(15)
+                        days_30_std = volatility * np.sqrt(30)
+                        
+                        # Calculate predicted prices
+                        price_7d = current_price * (1 + days_7_return)
+                        price_15d = current_price * (1 + days_15_return)
+                        price_30d = current_price * (1 + days_30_return)
+                        
+                        # Calculate confidence intervals (±1 std dev)
+                        price_7d_low = current_price * (1 + days_7_return - days_7_std)
+                        price_7d_high = current_price * (1 + days_7_return + days_7_std)
+                        
+                        price_15d_low = current_price * (1 + days_15_return - days_15_std)
+                        price_15d_high = current_price * (1 + days_15_return + days_15_std)
+                        
+                        price_30d_low = current_price * (1 + days_30_return - days_30_std)
+                        price_30d_high = current_price * (1 + days_30_return + days_30_std)
+                        
+                        # Calculate percentage changes
+                        change_7d = ((price_7d - current_price) / current_price) * 100
+                        change_15d = ((price_15d - current_price) / current_price) * 100
+                        change_30d = ((price_30d - current_price) / current_price) * 100
+                        
+                        price_predictions.append({
+                            'Ticker': ticker,
+                            'Current Price': f"₹{current_price:.2f}",
+                            '7-Day Prediction': f"₹{price_7d:.2f}",
+                            '7-Day Change': f"{change_7d:+.2f}%",
+                            '7-Day Range': f"₹{price_7d_low:.2f} - ₹{price_7d_high:.2f}",
+                            '15-Day Prediction': f"₹{price_15d:.2f}",
+                            '15-Day Change': f"{change_15d:+.2f}%",
+                            '15-Day Range': f"₹{price_15d_low:.2f} - ₹{price_15d_high:.2f}",
+                            '30-Day Prediction': f"₹{price_30d:.2f}",
+                            '30-Day Change': f"{change_30d:+.2f}%",
+                            '30-Day Range': f"₹{price_30d_low:.2f} - ₹{price_30d_high:.2f}",
+                            'Trend': trend_direction,
+                            'Confidence': f"{trend_confidence:.1%}"
+                        })
+                    else:
+                        # Insufficient data fallback
+                        price_predictions.append({
+                            'Ticker': ticker,
+                            'Current Price': 'N/A',
+                            '7-Day Prediction': 'N/A',
+                            '7-Day Change': 'N/A',
+                            '7-Day Range': 'N/A',
+                            '15-Day Prediction': 'N/A',
+                            '15-Day Change': 'N/A',
+                            '15-Day Range': 'N/A',
+                            '30-Day Prediction': 'N/A',
+                            '30-Day Change': 'N/A',
+                            '30-Day Range': 'N/A',
+                            'Trend': 'N/A',
+                            'Confidence': 'N/A'
+                        })
+                except Exception as e:
+                    # Error in price prediction for individual ticker
+                    price_predictions.append({
+                        'Ticker': ticker,
+                        'Current Price': 'Error',
+                        '7-Day Prediction': 'Error',
+                        '7-Day Change': 'Error',
+                        '7-Day Range': 'Error',
+                        '15-Day Prediction': 'Error',
+                        '15-Day Change': 'Error',
+                        '15-Day Range': 'Error',
+                        '30-Day Prediction': 'Error',
+                        '30-Day Change': 'Error',
+                        '30-Day Range': 'Error',
+                        'Trend': 'Error',
+                        'Confidence': 'Error'
+                    })
+            
+            if price_predictions:
+                pred_df = pd.DataFrame(price_predictions)
+                
+                # Display with color coding for changes
+                st.dataframe(
+                    pred_df,
+                    use_container_width=True,
+                    hide_index=True
+                )
+                
+                # Add explanatory note
+                st.info("""
+                📌 **Note**: Price predictions are based on:
+                - Historical price patterns and volatility
+                - Trend direction and confidence from ML models
+                - Statistical forecasting methods
+                - Confidence ranges show ±1 standard deviation
+                
+                ⚠️ **Disclaimer**: Predictions are for informational purposes only. Past performance does not guarantee future results.
+                """)
+            else:
+                st.warning("⚠️ No price predictions available. Please add stocks to your portfolio.")
+                
+        except Exception as e:
+            st.error(f"⚠️ Error generating price predictions: {str(e)}")
+            st.info("💡 Price predictions require at least 30 days of historical data for each ticker.")
+        
         # Calculate average sentiment score for portfolio
         portfolio_sentiment_scores = []
         for ticker in portfolio_tickers:
@@ -2378,6 +2514,8 @@ def display_analysis_dashboard(analysis_results: Dict[str, Any], system, portfol
                     }
                 )
                 st.plotly_chart(fig_risk, use_container_width=True)
+            else:
+                st.info("📊 No risk data available. Analyze some tickers to see portfolio risk distribution.")
         
         # Advanced Analytics
         st.subheader("🧠 Advanced Analytics")

@@ -8,13 +8,25 @@ import torch.nn as nn
 import torch.optim as optim
 import numpy as np
 import pandas as pd
-from realtime_anomaly_project.config.settings import TICKERS
-from realtime_anomaly_project.data_ingestion.yahoo import data_storage  # In-memory storage for stock data
+
+# Try to import optional dependencies for standalone usage
+try:
+    from realtime_anomaly_project.config.settings import TICKERS
+except ImportError:
+    TICKERS = []
+
+try:
+    from realtime_anomaly_project.data_ingestion.yahoo import data_storage
+except ImportError:
+    data_storage = None
 
 # Define the Transformer Autoencoder model
 class TransformerAutoencoder(nn.Module):
     def __init__(self, input_dim, hidden_dim=64, num_heads=4, num_layers=2):
         super(TransformerAutoencoder, self).__init__()
+        
+        # Project input to hidden dimension
+        self.input_projection = nn.Linear(input_dim, hidden_dim)
 
         self.encoder = nn.TransformerEncoder(
             nn.TransformerEncoderLayer(d_model=hidden_dim, nhead=num_heads),
@@ -24,11 +36,21 @@ class TransformerAutoencoder(nn.Module):
         self.decoder = nn.Linear(hidden_dim, input_dim)
 
     def forward(self, x):
-        # The Transformer expects the input shape to be [sequence_length, batch_size, input_dim]
-        x = x.transpose(0, 1)  # Shape to [batch_size, sequence_length, input_dim]
+        # Input shape: [batch_size, input_dim]
+        # Project to hidden dimension
+        x = self.input_projection(x)  # Shape: [batch_size, hidden_dim]
+        
+        # Need to add sequence dimension
+        if len(x.shape) == 2:
+            x = x.unsqueeze(1)  # Shape: [batch_size, 1, hidden_dim]
+        
+        # Transformer expects [sequence_length, batch_size, hidden_dim]
+        x = x.transpose(0, 1)  # Shape: [1, batch_size, hidden_dim]
         encoded = self.encoder(x)
         decoded = self.decoder(encoded)
-        return decoded.transpose(0, 1)  # Return shape to [batch_size, sequence_length, input_dim]
+        # Return to [batch_size, input_dim]
+        decoded = decoded.transpose(0, 1).squeeze(1)
+        return decoded
 
 # Function to train the model
 def train_model(model, data, num_epochs=50, batch_size=32, learning_rate=1e-3):
@@ -57,7 +79,11 @@ def compute_reconstruction_error(model, data):
     model.eval()
     with torch.no_grad():
         output = model(data)
+        # Calculate MSE for each sample (average across features)
         error = torch.mean((data - output) ** 2, dim=-1)
+        # If error is 0-D (single value), convert to array
+        if error.dim() == 0:
+            error = error.unsqueeze(0)
     return error.numpy()
 
 # Function to detect anomalies based on reconstruction error

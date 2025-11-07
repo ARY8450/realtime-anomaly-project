@@ -164,7 +164,21 @@ Real-Time Anomaly Detection System
 
 ### 🆕 Latest Enhancements (Nov 2025)
 
-#### 🎨 **Sentiment Score Display - NEW**
+#### 📊 **Predicted Price Table - NEW** (Latest Update)
+- ✅ **Multi-Timeframe Predictions**: 7-day, 15-day, and 30-day price forecasts
+- ✅ **Confidence Intervals**: Statistical ranges showing ±1 standard deviation
+- ✅ **Trend Integration**: ML-powered predictions adjusted by trend direction and confidence
+- ✅ **Historical Volatility**: Predictions based on actual market volatility patterns
+- ✅ **Percentage Changes**: Clear visualization of expected price movements
+- ✅ **Professional Disclaimers**: Educational notes about prediction methodology
+
+#### 🎨 **UI Refinements - NEW** (Latest Update)
+- ✅ **Cleaner Interface**: Removed redundant text elements for better user experience
+- ✅ **Streamlined News Display**: Removed duplicate headers across tabs
+- ✅ **Enhanced Portfolio Risk Chart**: Added fallback message for empty data
+- ✅ **Improved Visual Hierarchy**: Better organization of information across all tabs
+
+#### 🎨 **Sentiment Score Display**
 - ✅ **Colored Sentiment Badges**: Visual sentiment indicators with color-coded scores
   - 🟢 **Positive**: Green badge with score (0.05 to 1.0)
   - 🔴 **Negative**: Red badge with score (-1.0 to -0.05)
